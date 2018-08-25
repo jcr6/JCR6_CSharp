@@ -136,8 +136,8 @@ namespace UseJCR6
                     case 0xff:
                         theend = true;
                         break;
-            case 0x01:
-                    var tag= bt.ReadString().ToUpper(); //strings.ToUpper(qff.ReadString(btf)); 
+                    case 0x01:
+                        var tag= bt.ReadString().ToUpper(); //strings.ToUpper(qff.ReadString(btf)); 
                         switch (tag) {
                             case "FILE":
                                 var newentry = new TJCREntry();
@@ -325,7 +325,8 @@ namespace UseJCR6
     }
 
 
-class TJCRDIR{
+    class TJCRDIR
+    {
         public int FAToffset;
         public int FATsize;
         public int FATcsize;
@@ -336,18 +337,21 @@ class TJCRDIR{
         public Dictionary<string, TJCREntry> Entries = new Dictionary<string, TJCREntry>();
         public Dictionary<string, string> Comments = new Dictionary<string, string>();
 
-        public void PatchFile(string file){
+        public void PatchFile(string file)
+        {
             Patch(JCR6.Dir(file));
         }
 
-        public void Patch(TJCRDIR pdata){
+        public void Patch(TJCRDIR pdata)
+        {
             foreach (string k in pdata.CFGstr.Keys) { CFGstr[k] = pdata.CFGstr[k]; }
             foreach (string k in pdata.CFGint.Keys) { CFGint[k] = pdata.CFGint[k]; }
             foreach (string k in pdata.CFGbool.Keys) { CFGbool[k] = pdata.CFGbool[k]; }
             foreach (string k in pdata.Entries.Keys) { Entries[k] = pdata.Entries[k]; }
-            foreach (string k in pdata.Comments.Keys) {Comments[k] = pdata.Comments[k]; }
+            foreach (string k in pdata.Comments.Keys) { Comments[k] = pdata.Comments[k]; }
 
         }
+    }
 
         class JCR6
         {
