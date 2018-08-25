@@ -124,7 +124,7 @@ namespace UseJCR6
             //Console.WriteLine(ret);
             if (!JCR6.CompDrivers.ContainsKey(ret.FATstorage))
             {
-                JCR6.JERROR = "The File Table was packed with the '" + ret.FATstorage + "' algorithm, but unfortunately I don't have drivers loaded for that one.";
+                JCR6.JERROR = "The File Table of file '"+file+"' was packed with the '" + ret.FATstorage + "' algorithm, but unfortunately I don't have drivers loaded for that one.";
                 return null;
             }
             var fatbytes = JCR6.CompDrivers[ret.FATstorage].Expand(fatcbytes, ret.FATsize);
@@ -343,67 +343,79 @@ namespace UseJCR6
 
         public void PatchFile(string file)
         {
-            Patch(JCR6.Dir(file));
+            JCR6.dCHAT($"Patching: {file}");
+            var p=JCR6.Dir(file);
+            if (p==null) {
+                JCR6.JERROR = ("PATCH ERROR:" + JCR6.JERROR);
+                return;
+            }
+            Patch(p);
         }
 
         public void Patch(TJCRDIR pdata)
         {
-            foreach (string k in pdata.CFGstr.Keys) { CFGstr[k] = pdata.CFGstr[k]; }
-            foreach (string k in pdata.CFGint.Keys) { CFGint[k] = pdata.CFGint[k]; }
-            foreach (string k in pdata.CFGbool.Keys) { CFGbool[k] = pdata.CFGbool[k]; }
-            foreach (string k in pdata.Entries.Keys) { Entries[k] = pdata.Entries[k]; }
-            foreach (string k in pdata.Comments.Keys) { Comments[k] = pdata.Comments[k]; }
+            foreach (string k in pdata.CFGstr.Keys) { this.CFGstr[k] = pdata.CFGstr[k]; }
+            foreach (string k in pdata.CFGint.Keys) { this.CFGint[k] = pdata.CFGint[k]; }
+            foreach (string k in pdata.CFGbool.Keys) { this.CFGbool[k] = pdata.CFGbool[k]; }
+            foreach (string k in pdata.Entries.Keys) { this.Entries[k] = pdata.Entries[k]; }
+            foreach (string k in pdata.Comments.Keys) { this.Comments[k] = pdata.Comments[k]; }
 
         }
     }
 
-        class JCR6
+    class JCR6
+    {
+        public const bool dbg = true;
+
+        // Better leave these alone all the time!
+        // They are basically only used for drivier initiation, and since other classes must be able to do that, they are (for now) public.
+        public static Dictionary<string, TJCRBASECOMPDRIVER> CompDrivers = new Dictionary<string, TJCRBASECOMPDRIVER>();
+        public static Dictionary<string, TJCRBASEDRIVER> FileDrivers = new Dictionary<string, TJCRBASEDRIVER>();
+
+        public static void dCHAT(string s)
         {
-            // Better leave these alone all the time!
-            // They are basically only used for drivier initiation, and since other classes must be able to do that, they are (for now) public.
-            public static Dictionary<string, TJCRBASECOMPDRIVER> CompDrivers = new Dictionary<string, TJCRBASECOMPDRIVER>();
-            public static Dictionary<string, TJCRBASEDRIVER> FileDrivers = new Dictionary<string, TJCRBASEDRIVER>();
-
-
-            // Contains error message if last JCR6 error went wrong
-            static public string JERROR = "";
-
-            static JCR6()
-            {
-                MKL.Version("JCR6 - jcr6.cs", "18.08.24");
-                MKL.Lic("JCR6 - jcr6.cs", "Mozilla Public License 2.0");
-                CompDrivers["Store"] = new TJCRCStore();
-                FileDrivers["JCR6"] = new TJCR6DRIVER();
-            }
-
-            static public string Recognize(string file)
-            {
-                var ret = "NONE";
-                JERROR = "";
-                foreach (string k in FileDrivers.Keys)
-                { // k, v := range JCR6Drivers        
-                  // chat("Is " + file + " of type " + k + "?")            
-                  //fmt.Printf("key[%s] value[%s]\n", k, v)
-                    Console.WriteLine("Testing format: " + k);
-                    var v = FileDrivers[k];
-                    if (v.Recognize(file))
-                    {
-                        ret = k;
-                    }
-                }
-                return ret;
-            }
-
-            static public TJCRDIR Dir(string file)
-            {
-                var t = Recognize(file);
-                if (t == "NONE")
-                {
-                    JERROR = "\"" + file + "\" has not been recognized as any kind of file JCR6 supports";
-                    return null;
-                }
-                return FileDrivers[t].Dir(file);
-            }
-
+            if (dbg) { Console.WriteLine(s); }
         }
+
+        // Contains error message if last JCR6 error went wrong
+        static public string JERROR = "";
+
+        static JCR6()
+        {
+            MKL.Version("JCR6 - jcr6.cs", "18.08.24");
+            MKL.Lic("JCR6 - jcr6.cs", "Mozilla Public License 2.0");
+            CompDrivers["Store"] = new TJCRCStore();
+            FileDrivers["JCR6"] = new TJCR6DRIVER();
+        }
+
+        static public string Recognize(string file)
+        {
+            var ret = "NONE";
+            JERROR = "";
+            foreach (string k in FileDrivers.Keys)
+            { // k, v := range JCR6Drivers        
+              // chat("Is " + file + " of type " + k + "?")            
+              //fmt.Printf("key[%s] value[%s]\n", k, v)
+                dCHAT("Testing format: " + k);
+                var v = FileDrivers[k];
+                if (v.Recognize(file))
+                {
+                    ret = k;
+                }
+            }
+            return ret;
+        }
+
+        static public TJCRDIR Dir(string file)
+        {
+            var t = Recognize(file);
+            if (t == "NONE")
+            {
+                JERROR = "\"" + file + "\" has not been recognized as any kind of file JCR6 supports";
+                return null;
+            }
+            return FileDrivers[t].Dir(file);
+        }
+
+    }
 }
