@@ -237,7 +237,8 @@ namespace UseJCR6
                                     }
                                 }
                                 if (depcall!="") {
-                                    if ((!JCR.PatchFile(&ret, depcall)) && tag=="REQUIRE"){
+                                    ret.PatchFile(depcall);
+                                    if (JCR6.JERROR!="" && tag=="REQUIRE") {//((!ret.PatchFile(depcall)) && tag=="REQUIRE"){
                                         JCR6.JERROR = "Required JCR6 addon file (" + depcall + ") could not imported! Importer reported: "+JCR6.JERROR; //,fil,"N/A","JCR 6 Driver: Dir()")
                                         bt.Close();
                                         return null;
@@ -349,47 +350,52 @@ class TJCRDIR{
         }
 
         class JCR6
-    {
-        // Better leave these alone all the time!
-        // They are basically only used for drivier initiation, and since other classes must be able to do that, they are (for now) public.
-        public static Dictionary<string,TJCRBASECOMPDRIVER> CompDrivers = new Dictionary<string, TJCRBASECOMPDRIVER>();
-        public static Dictionary<string, TJCRBASEDRIVER> FileDrivers = new Dictionary<string, TJCRBASEDRIVER>();
-
-
-        // Contains error message if last JCR6 error went wrong
-        static public string JERROR = "";
-
-        static JCR6()
         {
-            MKL.Version("JCR6 - jcr6.cs", "18.08.24");
-            MKL.Lic("JCR6 - jcr6.cs", "Mozilla Public License 2.0");
-            CompDrivers["Store"] = new TJCRCStore();
-            FileDrivers["JCR6"] = new TJCR6DRIVER();
-        }
+            // Better leave these alone all the time!
+            // They are basically only used for drivier initiation, and since other classes must be able to do that, they are (for now) public.
+            public static Dictionary<string, TJCRBASECOMPDRIVER> CompDrivers = new Dictionary<string, TJCRBASECOMPDRIVER>();
+            public static Dictionary<string, TJCRBASEDRIVER> FileDrivers = new Dictionary<string, TJCRBASEDRIVER>();
 
-        static public string Recognize(string file ) {
-            var ret = "NONE";
-            JERROR = "";
-            foreach (string k in FileDrivers.Keys){ // k, v := range JCR6Drivers        
-                // chat("Is " + file + " of type " + k + "?")            
-                //fmt.Printf("key[%s] value[%s]\n", k, v)
-                Console.WriteLine("Testing format: " + k);
-                var v = FileDrivers[k];
-                if (v.Recognize(file)) {
-                    ret = k;    
+
+            // Contains error message if last JCR6 error went wrong
+            static public string JERROR = "";
+
+            static JCR6()
+            {
+                MKL.Version("JCR6 - jcr6.cs", "18.08.24");
+                MKL.Lic("JCR6 - jcr6.cs", "Mozilla Public License 2.0");
+                CompDrivers["Store"] = new TJCRCStore();
+                FileDrivers["JCR6"] = new TJCR6DRIVER();
+            }
+
+            static public string Recognize(string file)
+            {
+                var ret = "NONE";
+                JERROR = "";
+                foreach (string k in FileDrivers.Keys)
+                { // k, v := range JCR6Drivers        
+                  // chat("Is " + file + " of type " + k + "?")            
+                  //fmt.Printf("key[%s] value[%s]\n", k, v)
+                    Console.WriteLine("Testing format: " + k);
+                    var v = FileDrivers[k];
+                    if (v.Recognize(file))
+                    {
+                        ret = k;
+                    }
                 }
+                return ret;
             }
-            return ret;
-        }
 
-        static public TJCRDIR Dir(string file){
-            var t = Recognize(file);
-            if (t=="NONE") {
-                JERROR="\""+file+"\" has not been recognized as any kind of file JCR6 supports";
-                return null;
+            static public TJCRDIR Dir(string file)
+            {
+                var t = Recognize(file);
+                if (t == "NONE")
+                {
+                    JERROR = "\"" + file + "\" has not been recognized as any kind of file JCR6 supports";
+                    return null;
+                }
+                return FileDrivers[.Dir(file);
             }
-            return FileDrivers[.Dir(file);
-        }
 
-    }
+        }
 }
