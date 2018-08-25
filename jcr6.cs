@@ -131,7 +131,7 @@ namespace UseJCR6
             bt = QOpen.StreamFromBytes(fatbytes, QOpen.LittleEndian); // Little Endian is the default, but I need to make sure as JCR6 REQUIRES Little Endian for its directory structures.
             while ((!bt.EOF) && (!theend)) {
                 var mtag = bt.ReadByte(bt);
-                var ppp bt.Position;
+                var ppp = bt.Position;
                 switch (mtag) {
                     case 0xff:
                         theend = true;
@@ -225,7 +225,7 @@ namespace UseJCR6
                                     foreach(string depdir in depgetpaths[deppath]) //for _,depdir:=range depgetpaths[deppath]
                                     {
                                         if ((depcall=="") && qff.Exists(depdir+depfile) ) {
-                                            depcall=depdir+depfile
+                                            depcall = depdir + depfile;
                                         } /*else if (depcall=="" && impdebug ){
                                             if !qff.Exists(depdir+depfile) {
                                                 fmt.Printf("It seems %s doesn't exist!!\n",depdir+depfile)
@@ -271,8 +271,8 @@ namespace UseJCR6
     class TJCREntry
     {
         public Dictionary<string, string> datastring = new Dictionary<string, string>();
-        public Dictionary<string, int> dataint = new Dictionary<string, string>();
-        public Dictionary<string, bool> databool = new Dictionary<string, string>();
+        public Dictionary<string, int> dataint = new Dictionary<string, int>();
+        public Dictionary<string, bool> databool = new Dictionary<string, bool>();
         public string Entry
         {
             get { return datastring["__Entry"]; }
@@ -398,7 +398,7 @@ namespace UseJCR6
                     JERROR = "\"" + file + "\" has not been recognized as any kind of file JCR6 supports";
                     return null;
                 }
-                return FileDrivers[.Dir(file);
+                return FileDrivers[t].Dir(file);
             }
 
         }
