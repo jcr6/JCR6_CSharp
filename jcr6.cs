@@ -107,7 +107,7 @@ namespace UseJCR6
 
 
             } while (TTag != 255);
-            if (ret.CFGbool["_CaseSensitive"])
+            if (ret.CFGbool.ContainsKey("_CaseSensitive") && ret.CFGbool["_CaseSensitive"])
             {
                 JCR6.JERROR = "Case Sensitive dir support was already deprecated and removed from JCR6 before it went to the Go language. It's only obvious that support for this was never implemented in C# in the first place.";
                 bt.Close();
