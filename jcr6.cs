@@ -206,6 +206,8 @@ namespace UseJCR6
                                 var depcall = "";
                                 // var depgetpaths[2][] string
                                 List<string>[] depgetpaths= new List<string>[2];
+                                depgetpaths[0] = new List<string>();
+                                depgetpaths[1] = new List<string>();
                                 var owndir = Path.GetDirectoryName(file);
                                 int deppath = 0;
                                 /*if impdebug{
