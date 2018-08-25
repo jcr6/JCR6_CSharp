@@ -342,7 +342,7 @@ class TJCRDIR{
         public void Patch(TJCRDIR pdata){
             foreach (string k in pdata.CFGstr.Keys) { CFGstr[k] = pdata.CFGstr[k]; }
             foreach (string k in pdata.CFGint.Keys) { CFGint[k] = pdata.CFGint[k]; }
-            foreach (string k in pdata.CFGbool.Keys) { CFGstr[k] = pdata.CFGbool[k]; }
+            foreach (string k in pdata.CFGbool.Keys) { CFGbool[k] = pdata.CFGbool[k]; }
 
     }
 
