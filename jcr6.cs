@@ -343,10 +343,12 @@ class TJCRDIR{
             foreach (string k in pdata.CFGstr.Keys) { CFGstr[k] = pdata.CFGstr[k]; }
             foreach (string k in pdata.CFGint.Keys) { CFGint[k] = pdata.CFGint[k]; }
             foreach (string k in pdata.CFGbool.Keys) { CFGbool[k] = pdata.CFGbool[k]; }
+            foreach (string k in pdata.Entries.Keys) { Entries[k] = pdata.Entries[k]; }
+            foreach (string k in pdata.Comments.Keys) {Comments[k] = pdata.Comments[k]; }
 
-    }
+        }
 
-    class JCR6
+        class JCR6
     {
         // Better leave these alone all the time!
         // They are basically only used for drivier initiation, and since other classes must be able to do that, they are (for now) public.
