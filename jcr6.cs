@@ -80,7 +80,7 @@ namespace UseJCR6
                 return null;
             }
             byte TTag = 0;
-            string Tag;
+            string Tag="";
             do
             {
                 TTag = bt.ReadByte();
@@ -141,7 +141,7 @@ namespace UseJCR6
                         switch (tag) {
                             case "FILE":
                                 var newentry = new TJCREntry();
-                                newentry.Mainfile = file;
+                                newentry.MainFile = file;
                             /* Not needed in C#
                              * newentry.Datastring = map[string]string{}
                              * newentry.Dataint = map[string]int{}
@@ -181,9 +181,9 @@ namespace UseJCR6
                                 break;
                             case "COMMENT":
                                 var commentname = bt.ReadString();
-                                ret.Comments[commentname] = bt.ReadString(bt);
+                                ret.Comments[commentname] = bt.ReadString();
                                 break;
-                            case "IMPORT": case"REQUIRE":
+                            case "IMPORT": case "REQUIRE":
                                 //if impdebug {
                                 //    fmt.Printf("%s request from %s\n", tag, file)
                                 //                    }
@@ -224,7 +224,7 @@ namespace UseJCR6
                                 if (qstr.Left(depfile,1)!="/" && qstr.Left(depfile,2)!=":") {
                                     foreach(string depdir in depgetpaths[deppath]) //for _,depdir:=range depgetpaths[deppath]
                                     {
-                                        if ((depcall=="") && qff.Exists(depdir+depfile) ) {
+                                        if ((depcall=="") && File.Exists(depdir+depfile) ) {
                                             depcall = depdir + depfile;
                                         } /*else if (depcall=="" && impdebug ){
                                             if !qff.Exists(depdir+depfile) {
@@ -251,6 +251,7 @@ namespace UseJCR6
                                     fmt.Printf("Importing %s failed!", depfile);
                                     fmt.Printf("Request:    %s", tag);
                                 }*/
+                                break;
                         }
                         break;
                     default:
@@ -270,6 +271,7 @@ namespace UseJCR6
 
     class TJCREntry
     {
+        public string MainFile = "";
         public Dictionary<string, string> datastring = new Dictionary<string, string>();
         public Dictionary<string, int> dataint = new Dictionary<string, int>();
         public Dictionary<string, bool> databool = new Dictionary<string, bool>();
