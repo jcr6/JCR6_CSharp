@@ -66,7 +66,7 @@ namespace UseJCR6
             if (!File.Exists(file))
             {
                 Console.WriteLine(file + " not found!");
-                return false;
+                return null;
             }
             var bt = QOpen.ReadFile(file);
             isJ = bt.Size > 10; // I don't believe a JCR6 file can even get close to that!
@@ -130,7 +130,7 @@ namespace UseJCR6
             var fatbytes = JCR6.CompDrivers[ret.FATstorage].Expand(fatcbytes, ret.FATsize);
             bt = QOpen.StreamFromBytes(fatbytes, QOpen.LittleEndian); // Little Endian is the default, but I need to make sure as JCR6 REQUIRES Little Endian for its directory structures.
             while ((!bt.EOF) && (!theend)) {
-                var mtag = bt.ReadByte(bt);
+                var mtag = bt.ReadByte();
                 var ppp = bt.Position;
                 switch (mtag) {
                     case 0xff:
