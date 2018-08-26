@@ -6,7 +6,7 @@ namespace UseJCR6{
     class JCR6_RealDir : TJCRBASEDRIVER
     {
         string FLError { set { JCR6.JERROR = value; } }    
-        public JCR6_RealDir() { name = "Real Dir"; }
+        public JCR6_RealDir() { Name = "Real Dir"; }
         public bool allowhidden = false;
         public bool automerge = true;
         public override bool Recognize(string file) {
