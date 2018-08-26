@@ -48,7 +48,7 @@ namespace UseJCR6
         {
             bool ret = false;
             if (!File.Exists(file)) {
-                Console.WriteLine(file + " not found!");
+                JCR6.dCHAT(file + " not found!");
                 return false; 
             }
             var bt = QOpen.ReadFile(file);
@@ -416,7 +416,7 @@ namespace UseJCR6
 
     class JCR6
     {
-        public const bool dbg = true;
+        public const bool dbg = false;
 
         // Better leave these alone all the time!
         // They are basically only used for drivier initiation, and since other classes must be able to do that, they are (for now) public.
