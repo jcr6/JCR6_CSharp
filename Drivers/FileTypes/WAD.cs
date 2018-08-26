@@ -62,7 +62,7 @@ namespace UseJCR6{
             string[] LevelFiles = { "THINGS", "LINEDEFS", "SIDEDEFS", "VERTEXES", "SEGS", "SSECTORS", "NODES", "SECTORS", "REJECT", "BLOCKMAP", "BEHAVIOR" }; //' All files used in a DOOM/HERETIC/HEXEN level, in which I must note that "BEHAVIOR" is only used in HEXEN.
             if (BT == null)
             {
-                JCR6.JERROR = "WAD file could not be read!\n" + WAD;
+                JCR6.JERROR = "WAD file could not be read!\n" + file;
                 return null;
             }
             //BT = LittleEndianStream(BT) ' WADs were all written for the MS-DOS platform, which used LittleEndian, so we must make sure that (even if the routine is used on PowerPC Macs) that LittleEndian is used
@@ -77,7 +77,7 @@ namespace UseJCR6{
                     Returner.Comments["Notice"] = "This WAD file is a PWAD or Patch-WAD. It's not part of any official file of the games using the WAD system. Please respect the original copyright holders copyrights though!";
                     break;
                 default:
-                    JCR6.JERROR = "JCR_FetchWAD('" + WAD + "'): Requested file is not a WAD file";
+                    JCR6.JERROR = "JCR_FetchWAD('" + file + "'): Requested file is not a WAD file";
                     return null;
             }
             Returner.CFGbool["__CaseSensitive"] = false;
@@ -103,13 +103,13 @@ namespace UseJCR6{
                 {
                     //'Print "File = "+E.FileName+" >> Level = ~q"+Level+"~q >> Len="+Len(E.FileName)+" >> 1 = "+Left(E.FileName,1)+" >> 3 = "+Mid(E.FileName,3,1)
                     //'If Level="" 
-                    if (qstr.Left(E.FileName, 3) == "MAP")
+                    if (qstr.Left(E.Entry, 3) == "MAP")
                     {
                         Level = "MAP_" + E.Entry + "/";
                     }
                     else if (E.Entry.Length == 4 && qstr.Left(E.Entry, 1) == "E" && qstr.Mid(E.Entry, 3, 1) == "M")
                     {
-                        Level = "MAP_" + E.FileName + "/";
+                        Level = "MAP_" + E.Entry + "/";
                     }
                     else if (Level != "")
                     {
@@ -134,9 +134,9 @@ namespace UseJCR6{
         override public bool Recognize(string file)
         {
             if (!File.Exists(file)) return false;
-            var bt = QOpen.ReadFile(fil, QOpen.LittleEndian);
+            var bt = QOpen.ReadFile(file, QOpen.LittleEndian);
             if (bt == null) return false;
-            if (bt.Size < 4) { bt.Close; return false; }
+            if (bt.Size < 4) { bt.Close(); return false; }
             var head = bt.ReadString(4);
             bt.Close();
             return head == "IWAD" || head == "PWAD";
