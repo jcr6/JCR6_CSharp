@@ -345,8 +345,9 @@ namespace UseJCR6
         public void PatchFile(string file)
         {
             JCR6.dCHAT($"Patching: {file}");
-            var p=JCR6.Dir(file);
-            if (p==null) {
+            var p = JCR6.Dir(file);
+            if (p == null)
+            {
                 JCR6.JERROR = ("PATCH ERROR:" + JCR6.JERROR);
                 return;
             }
@@ -362,6 +363,55 @@ namespace UseJCR6
             foreach (string k in pdata.Comments.Keys) { this.Comments[k] = pdata.Comments[k]; }
 
         }
+
+        public byte[] JCR_B(string entry)
+        {
+            JCR6.JERROR = "";
+            var ce = entry.ToUpper();
+            if (!Entries.ContainsKey(ce)) { JCR6.JERROR = "Resource does not appear to contain an entry called: " + entry; return null; }
+            var e = Entries[ce];
+            byte[] cbuf;
+            byte[] ubuf;
+            var bt = QOpen.ReadFile(e.MainFile);
+            bt.Position = e.Offset;
+            cbuf = bt.ReadBytes(e.CompressedSize);
+            bt.Close();
+            if (!JCR6.CompDrivers.ContainsKey(e.Storage)) { JCR6.JERROR = "Entry \"" + entry + "\" has been packed with the unsupported \"" + e.Storage + "\" algorithm"; return null; }
+            ubuf = JCR6.CompDrivers[e.Storage].Expand(cbuf,e.Size);
+            return ubuf;
+        }
+
+        public string LoadString(string entry)
+        {
+            var buf = JCR_B(entry);
+            if (buf == null) return "";
+            return System.Text.Encoding.Default.GetString(buf);
+        }
+
+        public MemoryStream AsMemoryStream(string entry){
+            var buf = JCR_B(entry);
+            if (buf == null) return null;
+            return new MemoryStream(buf);
+        }
+
+        public QuickStream ReadFile(string entry,byte endian=QOpen.LittleEndian){
+            var buf = JCR_B(entry);
+            if (buf == null) return null;
+            return QOpen.StreamFromBytes(buf, endian);
+        }
+
+        public string[] ReadLines(string entry){
+            var s = LoadString(entry);
+            string[] eol = new string[3]; eol[0] = "\r\n"; eol[1] = "\n\r"; eol[2] = "\n";
+            foreach (string eoln in eol) {
+                if (s.Contains(eoln)) {
+                    var sp = new System.Text.RegularExpressions.Regex(eoln);
+                    return sp.Split(s); 
+                }
+            }
+            return new []{ s }; // if all one line, just dump it as one line!
+        }
+
     }
 
     class JCR6
