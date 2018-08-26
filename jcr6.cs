@@ -339,8 +339,8 @@ namespace UseJCR6
         public Dictionary<string, string> CFGstr = new Dictionary<string, string>();
         public Dictionary<string, bool> CFGbool = new Dictionary<string, bool>();
         public Dictionary<string, int> CFGint = new Dictionary<string, int>();
-        public Dictionary<string, TJCREntry> Entries = new Dictionary<string, TJCREntry>();
-        public Dictionary<string, string> Comments = new Dictionary<string, string>();
+        public SortedDictionary<string, TJCREntry> Entries = new SortedDictionary<string, TJCREntry>();
+        public SortedDictionary<string, string> Comments = new SortedDictionary<string, string>();
 
         public void PatchFile(string file)
         {
