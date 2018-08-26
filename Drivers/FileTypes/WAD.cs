@@ -97,7 +97,7 @@ namespace UseJCR6{
                 E.Size = BT.ReadInt();
                 E.Entry = BT.ReadString(8).Trim().Replace("\0", ""); //Replace(Trim(ReadString(BT, 8)), Chr(0), "")
                 E.CompressedSize = E.Size;
-                E.Storage = "Store"     // WAD does not support compression, so always deal this as "Stored"
+                E.Storage = "Store";   // WAD does not support compression, so always deal this as "Stored"
                 //    'E.Encryption = 0  ' WAD does not support encryption, so always value 0
                     if (SupportLevel) // ' If set the system will turn DOOM levels into a folder for better usage. When unset the system will just dump everything together with not the best results, but hey, who cares :)
                 {
