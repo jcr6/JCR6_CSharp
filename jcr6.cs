@@ -6,7 +6,7 @@
 // 	Mozilla Public License, v. 2.0. If a copy of the MPL was not 
 // 	distributed with this file, You can obtain one at 
 // 	http://mozilla.org/MPL/2.0/.
-//         Version: 18.08.24
+//         Version: 18.08.26
 // EndLic
 
 using TrickyUnits;
@@ -202,7 +202,7 @@ namespace UseJCR6
                                 }
                                 var depfile = depm["File"];
                                 //depsig   := depm["Signature"]
-                                var deppatha = depm["AllowPath"] == "TRUE";
+                                var deppatha = depm.ContainsKey("AllowPath") && depm["AllowPath"] == "TRUE";
                                 var depcall = "";
                                 // var depgetpaths[2][] string
                                 List<string>[] depgetpaths= new List<string>[2];
@@ -257,7 +257,8 @@ namespace UseJCR6
                         }
                         break;
                     default:
-                        JCR6.JERROR = $"Unknown main tag {mtag}";
+                        JCR6.JERROR = $"Unknown main tag {mtag}, at file table position ";
+                        JCR6.JERROR +=bt.Position;
                         bt.Close();
                         return null;
                 }
@@ -382,8 +383,8 @@ namespace UseJCR6
 
         static JCR6()
         {
-            MKL.Version("JCR6 - jcr6.cs", "18.08.24");
-            MKL.Lic("JCR6 - jcr6.cs", "Mozilla Public License 2.0");
+            MKL.Version("JCR6 - jcr6.cs","18.08.26");
+            MKL.Lic    ("JCR6 - jcr6.cs","Mozilla Public License 2.0");
             CompDrivers["Store"] = new TJCRCStore();
             FileDrivers["JCR6"] = new TJCR6DRIVER();
         }
