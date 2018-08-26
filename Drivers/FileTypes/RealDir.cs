@@ -8,6 +8,7 @@
 // 	http://mozilla.org/MPL/2.0/.
 //         Version: 18.08.26
 // EndLic
+using System;
 using System.IO;
 using System.Collections.Generic;
 
@@ -15,15 +16,17 @@ namespace UseJCR6{
 
     class JCR6_RealDir : TJCRBASEDRIVER
     {
-        string FLError { set { JCR6.JERROR = value; } }    
-        public JCR6_RealDir() { name = "Real Dir"; }
+        string FLError { set { JCR6.JERROR = value; } }
+        public JCR6_RealDir() { name = "Real Dir"; JCR6.FileDrivers["Real Directory"] = this; }
         public bool allowhidden = false;
         public bool automerge = true;
         public override bool Recognize(string file) {
             FileAttributes attr = File.GetAttributes(file);
             return (attr & FileAttributes.Directory) == FileAttributes.Directory;
         }
-        public override TJCRDIR Dir(string file){
+        public override TJCRDIR Dir(string file) => RDir(file, true);
+
+        private TJCRDIR RDir(string file,bool ap){
             // init
             var ret = new TJCRDIR();
             var path = file;
@@ -41,28 +44,37 @@ namespace UseJCR6{
             {
                 if (allowhidden || fi.Name.Substring(0, 1) != ".")
                 {
+                    JCR6.dCHAT("Recursing: " + fi.Name);
                     var a = JCR6.Dir(path + "/" + fi.Name);
                     foreach (string k in a.Entries.Keys)
                     {
                         var ke = a.Entries[k];
                         ret.Entries[(fi.Name + "/" + k).ToUpper()] = ke;
                         ke.Entry = fi.Name + "/" + ke.Entry;
-                        ke.MainFile = path + "/" + ke.Entry;
+                        ke.MainFile = path+"/"+fi.Name + "/" + ke.Entry;
                     }
                 }
             }
             foreach (FileInfo fi in di.GetFiles()) {
-                if (automerge && JCR6.Recognize(path + "/" + fi) != "NONE")
+                if (automerge && JCR6.Recognize(path + "/" + fi.Name) != "NONE")
                 {
                     var a = JCR6.Dir(path + "/" + fi.Name);
-                    foreach (string k in a.Entries.Keys)
+                    if (a == null)
                     {
-                        var ke = a.Entries[k];
-                        ret.Entries[(fi.Name + "/" + k).ToUpper()] = ke;
-                        ke.Entry = fi.Name + "/" + ke.Entry;
-                        ke.MainFile = path + "/" + ke.Entry;
+                        Console.WriteLine($"WARNING! Scanning {fi.Name} failed >> {JCR6.JERROR}");
                     }
-                    foreach (string k in a.Comments.Keys) { ret.Comments[k] = a.Comments[k]; }
+                    else
+                    {
+
+                        foreach (string k in a.Entries.Keys)
+                        {
+                            var ke = a.Entries[k];
+                            ret.Entries[(fi.Name + "/" + k).ToUpper()] = ke;
+                            ke.Entry = fi.Name + "/" + ke.Entry;
+                            ke.MainFile = path + "/" + ke.Entry;
+                        }
+                        foreach (string k in a.Comments.Keys) { ret.Comments[k] = a.Comments[k]; }
+                    }
                 }
                 else
                 {
