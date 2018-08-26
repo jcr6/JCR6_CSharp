@@ -45,6 +45,7 @@ namespace UseJCR6{
             MKL.Version("JCR6 - WAD.cs","18.08.26");
             MKL.Lic    ("JCR6 - WAD.cs","ZLib License");
             name = "Where's All the Data?";
+            JCR6.FileDrivers["WAD"] = this;
 
         }
 
