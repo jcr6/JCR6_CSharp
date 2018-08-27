@@ -17,7 +17,6 @@
 //      misrepresented as being the original software.
 //   3. This notice may not be removed or altered from any source distribution.
 // EndLic
-
 using TrickyUnits;
 using System.IO;
 
@@ -50,11 +49,11 @@ namespace UseJCR6
         override public TJCRDIR Dir(string file)
         {
             var QuakePAK = file;
-            var SupportLevel = false;
+            //var SupportLevel = false;
             var Returner = new TJCRDIR();
             TJCREntry E;
             var BT = QOpen.ReadFile(QuakePAK, QOpen.LittleEndian);
-            var Level = "";
+            //var Level = "";
             //Local LevelFiles$[] = ["THINGS","LINEDEFS","SIDEDEFS","VERTEXES","SEGS","SSECTORS","NODES","SECTORS","REJECT","BLOCKMAP","BEHAVIOR"] ' All files used in a DOOM/HERETIC/HEXEN level, in which I must note that "BEHAVIOR" is only used in HEXEN.
             if (BT == null)
             {
