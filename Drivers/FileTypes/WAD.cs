@@ -1,7 +1,7 @@
 // Lic:
 //   WAD.cs
 //   WAD Driver for JCR6
-//   version: 18.08.26
+//   version: 18.08.27
 //   Copyright (C) 2018 Jeroen P. Broks
 //   This software is provided 'as-is', without any express or implied
 //   warranty.  In no event will the authors be held liable for any damages
@@ -42,7 +42,7 @@ namespace UseJCR6{
 
         public JCR6_WAD()
         {
-            MKL.Version("JCR6 - WAD.cs","18.08.26");
+            MKL.Version("JCR6 - WAD.cs","18.08.27");
             MKL.Lic    ("JCR6 - WAD.cs","ZLib License");
             name = "Where's All the Data?";
             JCR6.FileDrivers["WAD"] = this;
