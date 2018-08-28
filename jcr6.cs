@@ -513,6 +513,7 @@ namespace UseJCR6
             return new TJCRCreateStream(this, Entry, Storage, Author, Notes);
         }
 
+
         public void Alias(string original, string target)
         {
             if (!Entries.ContainsKey(original.ToUpper())) { JCR6.JERROR = $"Cannot alias {original}. Entry not found!"; return; }
@@ -590,6 +591,12 @@ namespace UseJCR6
             ws.Close();
         }
 
+        public void AddComment(string name, string comment)
+        {
+            Comments[name] = comment;
+        }
+
+
         public TJCRCreate(string OutputFile, string FTStorage = "Store", string Signature = "")
         {
             JCR6.JERROR = "";
@@ -610,9 +617,9 @@ namespace UseJCR6
             mystream.WriteByte(255);
         }
 
-        public void AddComment(string name,string comment){
-            Comments[name] = comment;
-        }
+        ~TJCRCreate() { Close(); }
+
+
 
     }
 
