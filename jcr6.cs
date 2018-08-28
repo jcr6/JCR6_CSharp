@@ -6,7 +6,7 @@
 // 	Mozilla Public License, v. 2.0. If a copy of the MPL was not 
 // 	distributed with this file, You can obtain one at 
 // 	http://mozilla.org/MPL/2.0/.
-//         Version: 18.08.28
+//         Version: 18.08.29
 // EndLic
 
 using TrickyUnits;
@@ -506,7 +506,9 @@ namespace UseJCR6
         readonly int ftoffint;
         readonly string MainFile;
 
-        public TJCRCreateStream NewEntry(string Entry, string Storage, string Author = "", string Notes = "", byte Endian = QOpen.LittleEndian)
+        bool closed = false;
+
+        public TJCRCreateStream NewEntry(string Entry, string Storage="", string Author = "", string Notes = "", byte Endian = QOpen.LittleEndian)
         {
 
             if (!JCR6.CompDrivers.ContainsKey(Storage)) { JCR6.JERROR = $"I cannot compress with unknown storage method \"{Storage}\""; return null; }
@@ -537,6 +539,7 @@ namespace UseJCR6
 
         public void Close()
         {
+            if (closed) return;
             CloseAllEntries();
             var whereami = mystream.Position;
             mystream.Position = ftoffint;
@@ -572,16 +575,17 @@ namespace UseJCR6
             mystream.WriteString(fts);
             mystream.WriteBytes(packed);
             mystream.Close();
+            closed = true;
         }
 
-        public void AddString(string mystring, string Entry, string Storage, string Author = "", string Notes = "")
+        public void AddString(string mystring, string Entry, string Storage="Store", string Author = "", string Notes = "")
         {
             var s = NewEntry(Entry, Storage, Author, Notes);
             s.WriteString(mystring, true);
             s.Close();
         }
 
-        public void AddFile(string OriginalFile, string Entry, string Storage, string Author = "", string Notes = "")
+        public void AddFile(string OriginalFile, string Entry, string Storage="Store", string Author = "", string Notes = "")
         {
             var rs = QOpen.ReadFile(OriginalFile);
             var buf = rs.ReadBytes((int)rs.Size);
@@ -642,7 +646,7 @@ namespace UseJCR6
 
         static JCR6()
         {
-            MKL.Version("JCR6 - jcr6.cs","18.08.28");
+            MKL.Version("JCR6 - jcr6.cs","18.08.29");
             MKL.Lic    ("JCR6 - jcr6.cs","Mozilla Public License 2.0");
             CompDrivers["Store"] = new TJCRCStore();
             FileDrivers["JCR6"] = new TJCR6DRIVER();
