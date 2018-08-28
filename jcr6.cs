@@ -6,7 +6,7 @@
 // 	Mozilla Public License, v. 2.0. If a copy of the MPL was not 
 // 	distributed with this file, You can obtain one at 
 // 	http://mozilla.org/MPL/2.0/.
-//         Version: 18.08.27
+//         Version: 18.08.28
 // EndLic
 
 using TrickyUnits;
@@ -25,31 +25,35 @@ namespace UseJCR6
     // Basically you should not meddle with this class unless you know what you are doing.
     // The two abstract methods speak for itself. Compress is to make compression possible and Expand for Expansion or Decompression. 
     // The 'realsize' parameter has only been added as in my experience in earlier getups, so algorithms can require to know this prior to decompression.
-    abstract class TJCRBASECOMPDRIVER{
+    abstract class TJCRBASECOMPDRIVER
+    {
         public abstract byte[] Compress(byte[] inputbuffer);
         public abstract byte[] Expand(byte[] inputbuffer, int realsize);
     }
-    abstract class TJCRBASEDRIVER{
+    abstract class TJCRBASEDRIVER
+    {
         public string name = "???";
         public abstract bool Recognize(string file);
         public abstract TJCRDIR Dir(string file);
     }
 
-    class TJCRCStore : TJCRBASECOMPDRIVER{
+    class TJCRCStore : TJCRBASECOMPDRIVER
+    {
         public override byte[] Compress(byte[] inputbuffer) { return inputbuffer; }
-        public override byte[] Expand(byte[] inputbuffer, int realsize) { return inputbuffer;  }
+        public override byte[] Expand(byte[] inputbuffer, int realsize) { return inputbuffer; }
     }
 
     class TJCR6DRIVER : TJCRBASEDRIVER
     {
-        public TJCR6DRIVER() { name="JCR6";}
-        readonly string checkheader = "JCR6"+((char)26);
+        public TJCR6DRIVER() { name = "JCR6"; }
+        readonly string checkheader = "JCR6" + ((char)26);
         public override bool Recognize(string file)
         {
             bool ret = false;
-            if (!File.Exists(file)) {
+            if (!File.Exists(file))
+            {
                 JCR6.dCHAT(file + " not found!");
-                return false; 
+                return false;
             }
             var bt = QOpen.ReadFile(file);
             ret = bt.Size > 10; // I don't believe a JCR6 file can even get close to that!
@@ -80,7 +84,7 @@ namespace UseJCR6
                 return null;
             }
             byte TTag = 0;
-            string Tag="";
+            string Tag = "";
             do
             {
                 TTag = bt.ReadByte();
@@ -124,33 +128,38 @@ namespace UseJCR6
             //Console.WriteLine(ret);
             if (!JCR6.CompDrivers.ContainsKey(ret.FATstorage))
             {
-                JCR6.JERROR = "The File Table of file '"+file+"' was packed with the '" + ret.FATstorage + "' algorithm, but unfortunately I don't have drivers loaded for that one.";
+                JCR6.JERROR = "The File Table of file '" + file + "' was packed with the '" + ret.FATstorage + "' algorithm, but unfortunately I don't have drivers loaded for that one.";
                 return null;
             }
             var fatbytes = JCR6.CompDrivers[ret.FATstorage].Expand(fatcbytes, ret.FATsize);
             bt = QOpen.StreamFromBytes(fatbytes, QOpen.LittleEndian); // Little Endian is the default, but I need to make sure as JCR6 REQUIRES Little Endian for its directory structures.
-            while ((!bt.EOF) && (!theend)) {
+            while ((!bt.EOF) && (!theend))
+            {
                 var mtag = bt.ReadByte();
                 var ppp = bt.Position;
-                switch (mtag) {
+                switch (mtag)
+                {
                     case 0xff:
                         theend = true;
                         break;
                     case 0x01:
-                        var tag= bt.ReadString().ToUpper(); //strings.ToUpper(qff.ReadString(btf)); 
-                        switch (tag) {
+                        var tag = bt.ReadString().ToUpper(); //strings.ToUpper(qff.ReadString(btf)); 
+                        switch (tag)
+                        {
                             case "FILE":
                                 var newentry = new TJCREntry();
                                 newentry.MainFile = file;
-                            /* Not needed in C#
-                             * newentry.Datastring = map[string]string{}
-                             * newentry.Dataint = map[string]int{}
-                             * newentry.Databool = map[string]bool{}
-                             */
-                                var ftag= bt.ReadByte();
-                                while( ftag != 255 ){
+                                /* Not needed in C#
+                                 * newentry.Datastring = map[string]string{}
+                                 * newentry.Dataint = map[string]int{}
+                                 * newentry.Databool = map[string]bool{}
+                                 */
+                                var ftag = bt.ReadByte();
+                                while (ftag != 255)
+                                {
                                     //chats("FILE TAG %d", ftag)
-                                    switch (ftag) {
+                                    switch (ftag)
+                                    {
                                         case 1:
                                             var k = bt.ReadString();
                                             var v = bt.ReadString();
@@ -183,7 +192,8 @@ namespace UseJCR6
                                 var commentname = bt.ReadString();
                                 ret.Comments[commentname] = bt.ReadString();
                                 break;
-                            case "IMPORT": case "REQUIRE":
+                            case "IMPORT":
+                            case "REQUIRE":
                                 //if impdebug {
                                 //    fmt.Printf("%s request from %s\n", tag, file)
                                 //                    }
@@ -194,7 +204,8 @@ namespace UseJCR6
                                 string depk;
                                 string depv;
                                 var depm = new Dictionary<string, string>();
-                                while( deptag != 255 ){
+                                while (deptag != 255)
+                                {
                                     depk = bt.ReadString();
                                     depv = bt.ReadString();
                                     depm[depk] = depv;
@@ -205,7 +216,7 @@ namespace UseJCR6
                                 var deppatha = depm.ContainsKey("AllowPath") && depm["AllowPath"] == "TRUE";
                                 var depcall = "";
                                 // var depgetpaths[2][] string
-                                List<string>[] depgetpaths= new List<string>[2];
+                                List<string>[] depgetpaths = new List<string>[2];
                                 depgetpaths[0] = new List<string>();
                                 depgetpaths[1] = new List<string>();
                                 var owndir = Path.GetDirectoryName(file);
@@ -216,35 +227,45 @@ namespace UseJCR6
                                        fmt.Printf("= ValConv:     %d\n",deppath)
                                        fmt.Printf("= Prio entnum  %d\n",len(ret.Entries))
                                 }*/
-                                if (deppatha) {
+                                if (deppatha)
+                                {
                                     deppath = 1;
                                 }
-                                if (owndir != "") {owndir += "/";}
+                                if (owndir != "") { owndir += "/"; }
                                 depgetpaths[0].Add(owndir);
                                 depgetpaths[1].Add(owndir);
                                 // TODO: JCR6: depgetpaths[1] = append(depgetpaths[1], dirry.Dirry("$AppData$/JCR6/Dependencies/") )
-                                if (qstr.Left(depfile,1)!="/" && qstr.Left(depfile,2)!=":") {
-                                    foreach(string depdir in depgetpaths[deppath]) //for _,depdir:=range depgetpaths[deppath]
+                                if (qstr.Left(depfile, 1) != "/" && qstr.Left(depfile, 2) != ":")
+                                {
+                                    foreach (string depdir in depgetpaths[deppath]) //for _,depdir:=range depgetpaths[deppath]
                                     {
-                                        if ((depcall=="") && File.Exists(depdir+depfile) ) {
+                                        if ((depcall == "") && File.Exists(depdir + depfile))
+                                        {
                                             depcall = depdir + depfile;
                                         } /*else if (depcall=="" && impdebug ){
                                             if !qff.Exists(depdir+depfile) {
                                                 fmt.Printf("It seems %s doesn't exist!!\n",depdir+depfile)
                                             }*/
-                                    }   
-                                } else {
-                                    if (File.Exists(depfile)) {
+                                    }
+                                }
+                                else
+                                {
+                                    if (File.Exists(depfile))
+                                    {
                                         depcall = depfile;
                                     }
                                 }
-                                if (depcall!="") {
+                                if (depcall != "")
+                                {
                                     ret.PatchFile(depcall);
-                                    if (JCR6.JERROR!="" && tag=="REQUIRE") {//((!ret.PatchFile(depcall)) && tag=="REQUIRE"){
-                                        JCR6.JERROR = "Required JCR6 addon file (" + depcall + ") could not imported! Importer reported: "+JCR6.JERROR; //,fil,"N/A","JCR 6 Driver: Dir()")
+                                    if (JCR6.JERROR != "" && tag == "REQUIRE")
+                                    {//((!ret.PatchFile(depcall)) && tag=="REQUIRE"){
+                                        JCR6.JERROR = "Required JCR6 addon file (" + depcall + ") could not imported! Importer reported: " + JCR6.JERROR; //,fil,"N/A","JCR 6 Driver: Dir()")
                                         bt.Close();
                                         return null;
-                                    } else if (tag=="REQUIRE") {
+                                    }
+                                    else if (tag == "REQUIRE")
+                                    {
                                         JCR6.JERROR = "Required JCR6 addon file (" + depcall + ") could not found!"; //,fil,"N/A","JCR 6 Driver: Dir()")
                                         bt.Close();
                                         return null;
@@ -258,7 +279,7 @@ namespace UseJCR6
                         break;
                     default:
                         JCR6.JERROR = $"Unknown main tag {mtag}, at file table position ";
-                        JCR6.JERROR +=bt.Position;
+                        JCR6.JERROR += bt.Position;
                         bt.Close();
                         return null;
                 }
@@ -377,7 +398,7 @@ namespace UseJCR6
             cbuf = bt.ReadBytes(e.CompressedSize);
             bt.Close();
             if (!JCR6.CompDrivers.ContainsKey(e.Storage)) { JCR6.JERROR = "Entry \"" + entry + "\" has been packed with the unsupported \"" + e.Storage + "\" algorithm"; return null; }
-            ubuf = JCR6.CompDrivers[e.Storage].Expand(cbuf,e.Size);
+            ubuf = JCR6.CompDrivers[e.Storage].Expand(cbuf, e.Size);
             return ubuf;
         }
 
@@ -388,28 +409,209 @@ namespace UseJCR6
             return System.Text.Encoding.Default.GetString(buf);
         }
 
-        public MemoryStream AsMemoryStream(string entry){
+        public MemoryStream AsMemoryStream(string entry)
+        {
             var buf = JCR_B(entry);
             if (buf == null) return null;
             return new MemoryStream(buf);
         }
 
-        public QuickStream ReadFile(string entry,byte endian=QOpen.LittleEndian){
+        public QuickStream ReadFile(string entry, byte endian = QOpen.LittleEndian)
+        {
             var buf = JCR_B(entry);
             if (buf == null) return null;
             return QOpen.StreamFromBytes(buf, endian);
         }
 
-        public string[] ReadLines(string entry){
+        public string[] ReadLines(string entry)
+        {
             var s = LoadString(entry);
             string[] eol = new string[3]; eol[0] = "\r\n"; eol[1] = "\n\r"; eol[2] = "\n";
-            foreach (string eoln in eol) {
-                if (s.Contains(eoln)) {
+            foreach (string eoln in eol)
+            {
+                if (s.Contains(eoln))
+                {
                     var sp = new System.Text.RegularExpressions.Regex(eoln);
-                    return sp.Split(s); 
+                    return sp.Split(s);
                 }
             }
-            return new []{ s }; // if all one line, just dump it as one line!
+            return new[] { s }; // if all one line, just dump it as one line!
+        }
+
+    }
+
+    class TJCRCreateStream
+    {
+        readonly QuickStream stream;
+        readonly string storage;
+        readonly string author;
+        readonly string notes;
+        readonly string entry;
+        readonly MemoryStream memstream;
+        readonly TJCRCreate parent;
+        public byte[] buffer;
+
+
+        public TJCRCreateStream(TJCRCreate theparent, string theentry, string thestorage, string theauthor = "", string thenotes = "")
+        {
+            entry = theentry;
+            storage = thestorage;
+            author = theauthor;
+            notes = thenotes;
+            memstream = new MemoryStream();
+            stream = new QuickStream(memstream);
+            parent = theparent;
+            parent.OpenEntries[this] = theentry;
+        }
+
+        public void WriteByte(byte b) => stream.WriteByte(b);
+        public void WriteInt(int i) => stream.WriteInt(i);
+        public void WriteString(string s, bool raw = false) => stream.WriteString(s, raw);
+        public void WriteLong(long i) => stream.WriteLong(i);
+        public void WriteBytes(byte[] b, bool ce = false) => stream.WriteBytes(b, ce);
+        public void Close()
+        {
+            var rawbuff = memstream.ToArray();
+            var cmpbuff = JCR6.CompDrivers[storage].Compress(rawbuff);
+            var astorage = storage;
+            // TODO: "BRUTE" support entry closure
+            if (storage != "Store" && rawbuff.Length <= cmpbuff.Length) { cmpbuff = rawbuff; astorage = "Store"; }
+            parent.mystream.WriteBytes(cmpbuff);
+            parent.OpenEntries.Remove(this);
+            stream.Close();
+            var NEntry = new TJCREntry();
+            NEntry.Entry = entry;
+            NEntry.Size = rawbuff.Length;
+            NEntry.CompressedSize = cmpbuff.Length;
+            NEntry.Offset = (int)parent.mystream.Position;
+            NEntry.Author = author;
+            NEntry.Notes = notes;
+            NEntry.Storage = astorage;
+            NEntry.datastring["__JCR6FOR"] = "C#";
+            parent.Entries[entry.ToUpper()] = NEntry;
+        }
+    }
+
+
+
+    class TJCRCreate
+    {
+
+        public QuickStream mystream;
+        public Dictionary<TJCRCreateStream, string> OpenEntries = new Dictionary<TJCRCreateStream, string>();
+        public Dictionary<string, TJCREntry> Entries = new Dictionary<string, TJCREntry>();
+        Dictionary<string, string> Comments = new Dictionary<string, string>();
+
+        readonly string FileTableStorage;
+        readonly int ftoffint;
+        readonly string MainFile;
+
+        public TJCRCreateStream NewEntry(string Entry, string Storage, string Author = "", string Notes = "", byte Endian = QOpen.LittleEndian)
+        {
+
+            if (!JCR6.CompDrivers.ContainsKey(Storage)) { JCR6.JERROR = $"I cannot compress with unknown storage method \"{Storage}\""; return null; }
+            return new TJCRCreateStream(this, Entry, Storage, Author, Notes);
+        }
+
+        public void Alias(string original, string target)
+        {
+            if (!Entries.ContainsKey(original.ToUpper())) { JCR6.JERROR = $"Cannot alias {original}. Entry not found!"; return; }
+            var OEntry = Entries[original.ToUpper()];
+            var TEntry = new TJCREntry();
+            TEntry.Entry = target;
+            TEntry.MainFile = MainFile;
+            foreach (string k in OEntry.datastring.Keys) { TEntry.datastring[k] = OEntry.datastring[k]; }
+            foreach (string k in OEntry.dataint.Keys) { TEntry.dataint[k] = OEntry.dataint[k]; }
+            foreach (string k in OEntry.databool.Keys) { TEntry.databool[k] = OEntry.databool[k]; }
+        }
+
+
+
+        public void CloseAllEntries()
+        {
+            List<TJCRCreateStream> tl = new List<TJCRCreateStream>();
+            foreach (TJCRCreateStream s in OpenEntries.Keys) { tl.Add(s); }
+            foreach (TJCRCreateStream s in tl) { s.Close(); }
+        }
+
+        public void Close()
+        {
+            CloseAllEntries();
+            var whereami = mystream.Position;
+            mystream.Position = ftoffint;
+            mystream.WriteInt((int)whereami);
+            mystream.Position = whereami;
+            // TODO: finalizing JCR6 file
+            var ms = new MemoryStream();
+            var bt = new QuickStream(ms);
+            foreach (string k in Comments.Keys)
+            {
+                bt.WriteByte(1);
+                bt.WriteString("COMMENT");
+                bt.WriteString(k);
+                bt.WriteString(Comments[k]);
+            }
+            foreach(string k in Entries.Keys){
+                bt.WriteByte(1);
+                bt.WriteString("FILE");
+                var E = Entries[k];
+                foreach (string k2 in E.datastring.Keys) { bt.WriteByte(1); bt.WriteString(k2); bt.WriteString(E.datastring[k2]); }
+                foreach (string k2 in E.databool.Keys) { bt.WriteByte(2); bt.WriteString(k2); bt.WriteBool(E.databool[k2]); }
+                foreach (string k2 in E.dataint.Keys) { bt.WriteByte(3); bt.WriteString(k2); bt.WriteInt(E.dataint[k2]); }
+                bt.WriteByte(255);
+            }
+            // TODO: "BRUTE" support file table storage
+            var unpacked = ms.ToArray();
+            var fts = FileTableStorage;
+            var packed = JCR6.CompDrivers[FileTableStorage].Compress(unpacked);
+            if (fts != "Store" || packed.Length >= unpacked.Length) { packed = unpacked; fts = "Store"; }
+            bt.Close();
+            mystream.WriteInt(unpacked.Length);
+            mystream.WriteInt(packed.Length);
+            mystream.WriteString(fts);
+            mystream.WriteBytes(packed);
+            mystream.Close();
+        }
+
+        public void AddString(string mystring, string Entry, string Storage, string Author = "", string Notes = "")
+        {
+            var s = NewEntry(Entry, Storage, Author, Notes);
+            s.WriteString(mystring, true);
+            s.Close();
+        }
+
+        public void AddFile(string OriginalFile, string Entry, string Storage, string Author = "", string Notes = "")
+        {
+            var rs = QOpen.ReadFile(OriginalFile);
+            var buf = rs.ReadBytes((int)rs.Size);
+            rs.Close();
+            var ws = NewEntry(Entry, Storage, Author, Notes);
+            ws.WriteBytes(buf);
+            ws.Close();
+        }
+
+        public TJCRCreate(string OutputFile, string FTStorage = "Store", string Signature = "")
+        {
+            JCR6.JERROR = "";
+            // TODO: Make "Brute" always pass if asked for it in FT storage.
+            if (!JCR6.CompDrivers.ContainsKey(FTStorage)) { JCR6.JERROR = $"Storage method {FTStorage} not present!"; return; }
+            mystream = QOpen.WriteFile(OutputFile, QOpen.LittleEndian);
+            FileTableStorage = FTStorage;
+            mystream.WriteString("JCR6\x1a");
+            ftoffint = (int)mystream.Position;
+            MainFile = OutputFile;
+            mystream.WriteInt(0);
+            mystream.WriteByte(1);
+            mystream.WriteString("__Signature");
+            mystream.WriteString(Signature);
+            mystream.WriteByte(2);
+            mystream.WriteString("__CaseSensitive");
+            mystream.WriteByte(0);
+            mystream.WriteByte(255);
+        }
+
+        public void AddComment(string name,string comment){
+            Comments[name] = comment;
         }
 
     }
@@ -433,7 +635,7 @@ namespace UseJCR6
 
         static JCR6()
         {
-            MKL.Version("JCR6 - jcr6.cs","18.08.27");
+            MKL.Version("JCR6 - jcr6.cs","18.08.28");
             MKL.Lic    ("JCR6 - jcr6.cs","Mozilla Public License 2.0");
             CompDrivers["Store"] = new TJCRCStore();
             FileDrivers["JCR6"] = new TJCR6DRIVER();
