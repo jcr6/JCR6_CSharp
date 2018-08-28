@@ -476,9 +476,6 @@ namespace UseJCR6
             var astorage = storage;
             // TODO: "BRUTE" support entry closure
             if (storage != "Store" && rawbuff.Length <= cmpbuff.Length) { cmpbuff = rawbuff; astorage = "Store"; }
-            parent.mystream.WriteBytes(cmpbuff);
-            parent.OpenEntries.Remove(this);
-            stream.Close();
             var NEntry = new TJCREntry();
             NEntry.Entry = entry;
             NEntry.Size = rawbuff.Length;
@@ -489,6 +486,9 @@ namespace UseJCR6
             NEntry.Storage = astorage;
             NEntry.datastring["__JCR6FOR"] = "C#";
             parent.Entries[entry.ToUpper()] = NEntry;
+            parent.mystream.WriteBytes(cmpbuff);
+            parent.OpenEntries.Remove(this);
+            stream.Close();
         }
     }
 
@@ -564,7 +564,9 @@ namespace UseJCR6
                 foreach (string k2 in E.dataint.Keys) { bt.WriteByte(3); bt.WriteString(k2); bt.WriteInt(E.dataint[k2]); }
                 bt.WriteByte(255);
             }
+            bt.WriteByte(255);
             // TODO: "BRUTE" support file table storage
+            //Console.WriteLine($"Write on {whereami}/{mystream.Position}");
             var unpacked = ms.ToArray();
             var fts = FileTableStorage;
             var packed = JCR6.CompDrivers[FileTableStorage].Compress(unpacked);
@@ -608,7 +610,7 @@ namespace UseJCR6
             if (!JCR6.CompDrivers.ContainsKey(FTStorage)) { JCR6.JERROR = $"Storage method {FTStorage} not present!"; return; }
             mystream = QOpen.WriteFile(OutputFile, QOpen.LittleEndian);
             FileTableStorage = FTStorage;
-            mystream.WriteString("JCR6\x1a");
+            mystream.WriteString("JCR6"+(char)26,true);
             ftoffint = (int)mystream.Position;
             MainFile = OutputFile;
             mystream.WriteInt(0);
