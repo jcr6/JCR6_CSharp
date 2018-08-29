@@ -10,3 +10,5 @@ The "Compression" folder contains all compression methods that have been set up 
 If you are interested in writing nice drivers for JCR6 in C#, don't be a stranger, and try it. If you need some extra explanations or documentations about such things, ask me. :)
 
 
+
+If you take a look in the Wiki, you can see a quick overview of all the classes and their respective methods for optimal use of JCR6.
