@@ -1,7 +1,6 @@
 # JCR6_Sharp (WIP)
 
 These are just a bunch of class files you can use to read JCR6 files in C#
-Please note this is a WIP, and not yet fully usable.
 
 
 JCR = Jeroen's Collected Resource, and it's a modular resource "archiving" system, specifically set up for use in Games rather than real archiving (one of the reasons why I am not planning to do 'solid archiving' in it). It has proved to be pretty fast, and solid, and patchable, and for some uses very flexible.
