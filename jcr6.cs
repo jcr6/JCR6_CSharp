@@ -449,7 +449,7 @@ namespace UseJCR6
         readonly string entry;
         readonly MemoryStream memstream;
         readonly TJCRCreate parent;
-        public byte[] buffer;
+        //public byte[] buffer;
 
 
         public TJCRCreateStream(TJCRCreate theparent, string theentry, string thestorage, string theauthor = "", string thenotes = "")
@@ -586,6 +586,14 @@ namespace UseJCR6
             s.WriteString(mystring, true);
             s.Close();
         }
+
+        public void AddBytes(byte[] mybuffer, string Entry, string Storage = "Store", string Author = "", string Notes = "")
+        {
+            var s = NewEntry(Entry, Storage, Author, Notes);
+            s.WriteBytes(mybuffer);
+            s.Close();
+        }
+
 
         public void AddFile(string OriginalFile, string Entry, string Storage="Store", string Author = "", string Notes = "")
         {
