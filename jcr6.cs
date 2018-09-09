@@ -292,18 +292,38 @@ namespace UseJCR6
 
 
 
-
+    /// <summary>
+    /// This class is used to store all information about an entry living inside a JCR6 file.
+    /// </summary>
     class TJCREntry
     {
+        /// <summary>
+        /// Will contain the filename of the resource file this entry lives in (this is most of all important for multi-file resources).
+        /// </summary>
         public string MainFile = "";
+        /// <summary>
+        /// Contains string data about the entry. The nice part is that you can add fields to it to your liking if you want, but please keep in mind that all fields prefixed with two underscores are considered to be part of JCR6 itself and should not be used if you don't want conflicts with future versions.
+        /// </summary>
         public Dictionary<string, string> datastring = new Dictionary<string, string>();
+        /// <summary>
+        /// Contains integer data about the entry. The nice part is that you can add fields to it to your liking if you want, but please keep in mind that all fields prefixed with two underscores are considered to be part of JCR6 itself and should not be used if you don't want conflicts with future versions.
+        /// </summary>
         public Dictionary<string, int> dataint = new Dictionary<string, int>();
+        /// <summary>
+        /// Contains boolean data about the entry. The nice part is that you can add fields to it to your liking if you want, but please keep in mind that all fields prefixed with two underscores are considered to be part of JCR6 itself and should not be used if you don't want conflicts with future versions.
+        /// </summary>
         public Dictionary<string, bool> databool = new Dictionary<string, bool>();
+        /// <summary>
+        /// Contains the true name of the entry. Also with its regular upper and lower case settings.
+        /// </summary>
         public string Entry
         {
             get { return datastring["__Entry"]; }
             set { datastring["__Entry"] = value; }
         }
+        /// <summary>
+        /// Gets or sets the size of an entry (setting should only be done by JCR6 write classes itself) without compression.
+        /// </summary>
         public int Size
         {
             get
@@ -315,27 +335,42 @@ namespace UseJCR6
                 dataint["__Size"] = value;
             }
         }
+        /// <summary>
+        /// Gets or sets the compressed size of an entry (setting should only be done by JCR6 write classes itself)
+        /// </summary>
         public int CompressedSize
         {
             get { return dataint["__CSize"]; }
             set { dataint["__CSize"] = value; }
         }
+        /// <summary>
+        /// Gets or sets the offset of an entry inside its mainfile. (setting should only be done by JCR6 write classes itself)
+        /// </summary>
         public int Offset
         {
             get { return dataint["__Offset"]; }
             set { dataint["__Offset"] = value; }
         }
+        /// <summary>
+        /// Which compression algorithm has been used to compress this entry?
+        /// </summary>
         public string Storage
         {
             get { return datastring["__Storage"]; }
             set { datastring["__Storage"] = value; }
         }
+        /// <summary>
+        /// Gets or sets the author of this entry. This can be handy when you make use of 3rd party assets in your projects.
+        /// </summary>
         public string Author
         {
             get { return datastring["__Author"]; }
             set { datastring["__Author"] = value; }
 
         }
+        /// <summary>
+        /// Gets or sets the notes of an entry. I myself often use these to include copyright and license notices.
+        /// </summary>
         public string Notes
         {
             get { return datastring["__Notes"]; }
@@ -351,6 +386,11 @@ namespace UseJCR6
     }
 
 
+    /// <summary>
+    /// This class is used to store all information of the directory inside the JCR6 resource.
+    /// It also contains many handy methods to help you work with JCR6 resources.
+    /// Although strictly speaking writing is possible, it's best to consider everything within this class as "read-only".
+    /// </summary>
     class TJCRDIR
     {
         public int FAToffset;
@@ -363,6 +403,22 @@ namespace UseJCR6
         public SortedDictionary<string, TJCREntry> Entries = new SortedDictionary<string, TJCREntry>();
         public SortedDictionary<string, string> Comments = new SortedDictionary<string, string>();
 
+        /// <summary>
+        /// Count the entries.
+        /// </summary>
+        /// <value>the number of entries inside this JCR6 resource.</value>
+        public int CountEntries {
+            get{
+                var ret = 0;
+                foreach (string str in Entries.Keys) ret++;
+                return ret;
+            }
+        }
+
+        /// <summary>
+        /// Patches a file into a JCR6 resource, if JCR6 can recognise it as a resource.
+        /// </summary>
+        /// <param name="file">File.</param>
         public void PatchFile(string file)
         {
             JCR6.dCHAT($"Patching: {file}");
@@ -374,7 +430,10 @@ namespace UseJCR6
             }
             Patch(p);
         }
-
+        /// <summary>
+        /// Patches another resource into this resource.
+        /// </summary>
+        /// <param name="pdata">Pdata.</param>
         public void Patch(TJCRDIR pdata)
         {
             foreach (string k in pdata.CFGstr.Keys) { this.CFGstr[k] = pdata.CFGstr[k]; }
@@ -385,6 +444,11 @@ namespace UseJCR6
 
         }
 
+        /// <summary>
+        /// Reads the content of a JCR6 resource entry.
+        /// </summary>
+        /// <returns>The contents of the entry in a byte array</returns>
+        /// <param name="entry">The entry name (case insensitive)</param>
         public byte[] JCR_B(string entry)
         {
             JCR6.JERROR = "";
@@ -402,6 +466,11 @@ namespace UseJCR6
             return ubuf;
         }
 
+        /// <summary>
+        /// Reads the content of a JCR6 resource entry.
+        /// </summary>
+        /// <returns>The contents of the entry as a string</returns>
+        /// <param name="entry">The entry name (case insensitive)</param>
         public string LoadString(string entry)
         {
             var buf = JCR_B(entry);
@@ -409,6 +478,11 @@ namespace UseJCR6
             return System.Text.Encoding.Default.GetString(buf);
         }
 
+        /// <summary>
+        /// Opens an entry inside a JCR6 file as a standard default memory stream for the regular C# routines to read.
+        /// </summary>
+        /// <returns>The memory stream.</returns>
+        /// <param name="entry">The entry name (case insensitive)</param>
         public MemoryStream AsMemoryStream(string entry)
         {
             var buf = JCR_B(entry);
@@ -416,6 +490,12 @@ namespace UseJCR6
             return new MemoryStream(buf);
         }
 
+        /// <summary>
+        /// Opens the file as a QuickStream. See the qstream.cs class file for more information about that.
+        /// </summary>
+        /// <returns>The QuickStream</returns>
+        /// <param name="entry">>The entry name (case insensitive)</param>
+        /// <param name="endian">QOpen.LittleEndian or QOpen.BigEndian for automatic endian conversion, if set to 0 it will just read endians by the way the CPU does it.</param>
         public QuickStream ReadFile(string entry, byte endian = QOpen.LittleEndian)
         {
             var buf = JCR_B(entry);
@@ -423,6 +503,11 @@ namespace UseJCR6
             return QOpen.StreamFromBytes(buf, endian);
         }
 
+        /// <summary>
+        /// Reads the content of a JCR6 resource entry
+        /// </summary>
+        /// <returns>All lines of the JCR6 entry (assuming it's a text file). A (limited) support is there for recognition of DOS-text files (as used by Windows) and Unix text files (as used by Mac and Linux).</returns>
+        /// <param name="entry">The entry name (case insensitive)</param>
         public string[] ReadLines(string entry)
         {
             var s = LoadString(entry);
@@ -452,14 +537,14 @@ namespace UseJCR6
         //public byte[] buffer;
 
 
-        public TJCRCreateStream(TJCRCreate theparent, string theentry, string thestorage, string theauthor = "", string thenotes = "")
+        public TJCRCreateStream(TJCRCreate theparent, string theentry, string thestorage, string theauthor = "", string thenotes = "", byte Endian = QOpen.LittleEndian)
         {
             entry = theentry;
             storage = thestorage;
             author = theauthor;
             notes = thenotes;
             memstream = new MemoryStream();
-            stream = new QuickStream(memstream);
+            stream = new QuickStream(memstream,Endian);
             parent = theparent;
             parent.OpenEntries[this] = theentry;
         }
@@ -508,14 +593,31 @@ namespace UseJCR6
 
         bool closed = false;
 
+        /// <summary>
+        /// Creates a stream for an entry you want to add to the JCR6 resource. 
+        /// </summary>
+        /// <remarks>JCR6 uses memory streams for this, so whatever you add to this, keep the limitations of your RAM in mind.</remarks>
+        /// <returns>The entry's stream.</returns>
+        /// <param name="Entry">Entry name.</param>
+        /// <param name="Storage">Storage/compression algorithm.</param>
+        /// <param name="Author">Author name.</param>
+        /// <param name="Notes">Notes.</param>
+        /// <param name="Endian">Endian setting.</param>
         public TJCRCreateStream NewEntry(string Entry, string Storage="", string Author = "", string Notes = "", byte Endian = QOpen.LittleEndian)
         {
 
             if (!JCR6.CompDrivers.ContainsKey(Storage)) { JCR6.JERROR = $"I cannot compress with unknown storage method \"{Storage}\""; return null; }
-            return new TJCRCreateStream(this, Entry, Storage, Author, Notes);
+            return new TJCRCreateStream(this, Entry, Storage, Author, Notes,Endian);
         }
 
 
+        /// <summary>
+        /// Creates an "alias" of a JCR6 entry. In JCR6 an "Alias" is just a second entry poiting to the same data as another entry. With advanced JCR6 usage, this can sometimes make your life a lot easier.
+        /// </summary>
+        /// <remarks>If the target already exists, JCR6 will just override the reference, but NOT the data, so that can lead to unaccesible data in your JCR6 file. Second, JCR6 is NOT able to tell which entry is the "orginal" and which is the "target". For JCR6 they are just two separate entries and it really doesn't care that all their pointer data is the same.
+        /// </remarks>
+        /// <param name="original">Original entry.</param>
+        /// <param name="target">Target entry.</param>
         public void Alias(string original, string target)
         {
             if (!Entries.ContainsKey(original.ToUpper())) { JCR6.JERROR = $"Cannot alias {original}. Entry not found!"; return; }
@@ -537,6 +639,10 @@ namespace UseJCR6
             foreach (TJCRCreateStream s in tl) { s.Close(); }
         }
 
+        /// <summary>
+        /// Closes and finalizes JCR6 file so it's ready for usage.
+        /// All Streams attacked to this JCR6 creation instance will automatically be closed and added according to their settings respectively.
+        /// </summary>
         public void Close()
         {
             if (closed) return;
@@ -637,6 +743,9 @@ namespace UseJCR6
 
     }
 
+    /// <summary>
+    /// The basic JCR6 class.
+    /// </summary>
     class JCR6
     {
         public const bool dbg = false;
@@ -651,7 +760,7 @@ namespace UseJCR6
             if (dbg) { Console.WriteLine(s); }
         }
 
-        // Contains error message if last JCR6 error went wrong
+        /// <summary>Contains error message if last JCR6 error went wrong</summary> 
         static public string JERROR = "";
 
         static JCR6()
@@ -662,6 +771,11 @@ namespace UseJCR6
             FileDrivers["JCR6"] = new TJCR6DRIVER();
         }
 
+        /// <summary>
+        /// Recognize the specified file for use for JCR6. You'll rarely need this yourself, JCR6.Dir calls it to know which driver it needs.
+        /// </summary>
+        /// <returns>The name of the driver needed to load this file with JCR6, or NONE if the file has not been recognized.</returns>
+        /// <param name="file">JCR resource.</param>
         static public string Recognize(string file)
         {
             var ret = "NONE";
@@ -680,6 +794,12 @@ namespace UseJCR6
             return ret;
         }
 
+        /// <summary>
+        /// Get the directory of a JCR resource.
+        /// All known drivers will be tried automatically.
+        /// </summary>
+        /// <returns>The directory class.</returns>
+        /// <param name="file">The file holding the JCR6 resource (or the directory in case of a real-dir, *if* the dirver is loaded that is).</param>
         static public TJCRDIR Dir(string file)
         {
             var t = Recognize(file);
