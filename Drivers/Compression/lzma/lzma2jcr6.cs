@@ -6,7 +6,7 @@
 // 	Mozilla Public License, v. 2.0. If a copy of the MPL was not 
 // 	distributed with this file, You can obtain one at 
 // 	http://mozilla.org/MPL/2.0/.
-//         Version: 18.08.26
+//         Version: 18.09.19
 // EndLic
 using SevenZip.Compression.LZMA;
 namespace UseJCR6{
@@ -25,6 +25,10 @@ namespace UseJCR6{
 
         public JCR6_lzma() { JCR6.CompDrivers["lzma"] = this; }
 
+        /// <summary>
+        /// Initizes the JCR6 lzma drivers into JCR6
+        /// </summary>
+        static void Init() { new JCR6_lzma(); }
     }
 
 }
