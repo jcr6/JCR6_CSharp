@@ -9,6 +9,7 @@
 //         Version: 18.09.19
 // EndLic
 using SevenZip.Compression.LZMA;
+using TrickyUnits;
 namespace UseJCR6{
 
     class JCR6_lzma : TJCRBASECOMPDRIVER {
@@ -23,12 +24,18 @@ namespace UseJCR6{
             return ret;
         }
 
-        public JCR6_lzma() { JCR6.CompDrivers["lzma"] = this; }
+        public JCR6_lzma() { 
+            JCR6.CompDrivers["lzma"] = this;
+            MKL.Lic    ("JCR6 - lzma2jcr6.cs","Mozilla Public License 2.0");
+            MKL.Version("JCR6 - lzma2jcr6.cs","18.09.19");
+        }
 
         /// <summary>
         /// Initizes the JCR6 lzma drivers into JCR6
         /// </summary>
-        static void Init() { new JCR6_lzma(); }
+        static public void Init() { 
+            new JCR6_lzma(); 
+        }
     }
 
 }
