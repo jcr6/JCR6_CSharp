@@ -349,7 +349,7 @@ namespace UseJCR6
         /// </summary>
         public string Ratio{ get {
                 if (Size <= 0) return "N/A";
-                return $"{Math.Floor((double)((CompressedSize / Size) * 100))}%";
+                return $"{Math.Floor((double)(((double)CompressedSize / Size) * (double)100))}%";
             }}
 
         /// <summary>
