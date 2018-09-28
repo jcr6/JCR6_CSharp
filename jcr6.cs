@@ -6,7 +6,7 @@
 // 	Mozilla Public License, v. 2.0. If a copy of the MPL was not 
 // 	distributed with this file, You can obtain one at 
 // 	http://mozilla.org/MPL/2.0/.
-//         Version: 18.09.09
+//         Version: 18.09.28
 // EndLic
 
 using TrickyUnits;
@@ -344,6 +344,15 @@ namespace UseJCR6
             set { dataint["__CSize"] = value; }
         }
         /// <summary>
+        /// Contains a string presentation of the ratio in %.
+        /// Please note, JCR6 doesn't tell you how much smaller it is, but how to how much % the file has been reduced.
+        /// </summary>
+        public string Ratio{ get {
+                if (Size <= 0) return "N/A";
+                return $"{Math.Floor((double)((CompressedSize / Size) * 100))}%";
+            }}
+
+        /// <summary>
         /// Gets or sets the offset of an entry inside its mainfile. (setting should only be done by JCR6 write classes itself)
         /// </summary>
         public int Offset
@@ -415,6 +424,15 @@ namespace UseJCR6
             }
         }
 
+
+        /// <summary>
+        /// Checks if an entry exists
+        /// </summary>
+        /// <remarks>Please remember that JCR6 is case INSENSITIVE!!!</remarks>
+        /// <returns>True if the entry does exist and false otherwise</returns>
+        /// <param name="entry">Entry.</param>
+        public bool Exists(string entry) => Entries.ContainsKey(entry.ToUpper());
+
         /// <summary>
         /// Patches a file into a JCR6 resource, if JCR6 can recognise it as a resource.
         /// </summary>
@@ -465,6 +483,64 @@ namespace UseJCR6
             ubuf = JCR6.CompDrivers[e.Storage].Expand(cbuf, e.Size);
             return ubuf;
         }
+
+
+        /// <summary>
+        /// Loads a stringmap (or Dictionary&lt;string,string&gt;) from a JCR file,in simple form (I rarely used this, but hey,it's there :P )
+        /// </summary>
+        /// <returns>The string map.</returns>
+        /// <param name="filename">Name of the entry in this JCR6 resource.</param>
+        public Dictionary<string, string> LoadStringMapSimple(string filename)
+        {
+            var bt = ReadFile(filename,QOpen.LittleEndian);
+            bt.Position = 0;
+            var ret = new Dictionary<string, string>();
+            //Console.WriteLine($"LSM START! {bt.Position}/{bt.Size}");
+            while (!bt.EOF)
+            {
+                //Console.WriteLine($"LSM: {bt.Position}/{bt.Size}");
+                var lkey = bt.ReadInt(); //Console.WriteLine(lkey);
+                var key = bt.ReadString(lkey); //Console.WriteLine(key);
+                var lvalue = bt.ReadInt(); //Console.WriteLine(lvalue);
+                var value = bt.ReadString(lvalue); //Console.WriteLine(value);
+                //Console.WriteLine($"LSM: {key} = {value}.");
+                ret[key] = value;
+            }
+            //Console.WriteLine("Loaded LSM");
+            bt.Close();
+            return ret;
+        }
+
+        /// <summary>
+        /// Loads the stringmap. In most of my works this variant has been used.
+        /// </summary>
+        /// <returns>The string map.</returns>
+        /// <param name="entry">Entry in JCR6 resource.</param>
+        public Dictionary<string, string> LoadStringMap(string entry){
+            var bt = ReadFile(entry, QOpen.LittleEndian);
+            if (bt == null) return null;
+            var ret = new Dictionary<string, string>();
+            string k;
+            string v;
+            while (true){
+                var tag = bt.ReadByte();
+                switch(tag){
+                    case 1:
+                        k = bt.ReadString();
+                        v = bt.ReadString();
+                        ret[k] = v;
+                        break;
+                    case 255:
+                        bt.Close();
+                        return ret;
+                    default:
+                        bt.Close();
+                        JCR6.JERROR = $"Invalid tag in stringmap {tag}";
+                        return null;
+                }
+            }
+        }
+
 
         /// <summary>
         /// Reads the content of a JCR6 resource entry.
@@ -608,6 +684,25 @@ namespace UseJCR6
 
             if (!JCR6.CompDrivers.ContainsKey(Storage)) { JCR6.JERROR = $"I cannot compress with unknown storage method \"{Storage}\""; return null; }
             return new TJCRCreateStream(this, Entry, Storage, Author, Notes,Endian);
+        }
+
+        /// <summary>
+        /// Saves a stringmap (Dictionary&lt;string,string&gt;&lt;/string&gt;) into a JCR6 file as an entry
+        /// </summary>
+        /// <param name="data">The stringmap in question</param>
+        /// <param name="Entry">Entry name.</param>
+        /// <param name="Storage">Storage algorith.</param>
+        /// <param name="Author">Author name.</param>
+        /// <param name="Notes">Notes.</param>
+        public void NewStringMap(Dictionary<string,string> data,string Entry,string Storage="", string Author="",string Notes=""){
+            var bt = NewEntry(Entry, Storage, Author, Notes, QOpen.LittleEndian);
+            foreach(string k in data.Keys){
+                bt.WriteByte(1);
+                bt.WriteString(k);
+                bt.WriteString(data[k]);
+            }
+            bt.WriteByte(255);
+            bt.Close();
         }
 
 
@@ -765,7 +860,7 @@ namespace UseJCR6
 
         static JCR6()
         {
-            MKL.Version("JCR6 - jcr6.cs","18.09.09");
+            MKL.Version("JCR6 - jcr6.cs","18.09.28");
             MKL.Lic    ("JCR6 - jcr6.cs","Mozilla Public License 2.0");
             CompDrivers["Store"] = new TJCRCStore();
             FileDrivers["JCR6"] = new TJCR6DRIVER();
