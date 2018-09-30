@@ -6,7 +6,7 @@
 // 	Mozilla Public License, v. 2.0. If a copy of the MPL was not 
 // 	distributed with this file, You can obtain one at 
 // 	http://mozilla.org/MPL/2.0/.
-//         Version: 18.09.28
+//         Version: 18.09.30
 // EndLic
 
 using TrickyUnits;
@@ -382,7 +382,9 @@ namespace UseJCR6
         /// </summary>
         public string Notes
         {
-            get { return datastring["__Notes"]; }
+            get {
+                if (!datastring.ContainsKey("__Notes")) return "";
+                return datastring["__Notes"]; }
             set { datastring["__Notes"] = value; }
 
         }
@@ -860,7 +862,7 @@ namespace UseJCR6
 
         static JCR6()
         {
-            MKL.Version("JCR6 - jcr6.cs","18.09.28");
+            MKL.Version("JCR6 - jcr6.cs","18.09.30");
             MKL.Lic    ("JCR6 - jcr6.cs","Mozilla Public License 2.0");
             CompDrivers["Store"] = new TJCRCStore();
             FileDrivers["JCR6"] = new TJCR6DRIVER();
