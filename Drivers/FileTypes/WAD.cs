@@ -1,7 +1,7 @@
 // Lic:
 //   WAD.cs
 //   WAD Driver for JCR6
-//   version: 18.08.27
+//   version: 18.09.30
 //   Copyright (C) 2018 Jeroen P. Broks
 //   This software is provided 'as-is', without any express or implied
 //   warranty.  In no event will the authors be held liable for any damages
@@ -42,7 +42,7 @@ namespace UseJCR6{
 
         public JCR6_WAD()
         {
-            MKL.Version("JCR6 - WAD.cs","18.08.27");
+            MKL.Version("JCR6 - WAD.cs","18.09.30");
             MKL.Lic    ("JCR6 - WAD.cs","ZLib License");
             name = "Where's All the Data?";
             JCR6.FileDrivers["WAD"] = this;
@@ -72,7 +72,7 @@ namespace UseJCR6{
             switch (Header)
             {
                 case "IWAD":
-                    Returner.Comments["Important notice"] = "The WAD file you are viewing is an IWAD,~nmeaning it belongs to a copyrighted project.~n~nAll content within it is very likely protected by copyright~neither by iD software or Apogee's Developers of Incredible Power or Raven Software.~n~nNothing can stop you from analysing this file and viewing its contents,~nbut don't extract and distribute any contents of this file~nwithout proper permission from the original copyright holder";
+                    Returner.Comments["Important notice"] = "The WAD file you are viewing is an IWAD,\nmeaning it belongs to a copyrighted project.\n\nAll content within it is very likely protected by copyright\neither by iD software or Apogee's Developers of Incredible Power or Raven Software.\n\nNothing can stop you from analysing this file and viewing its contents,\nbut don't extract and distribute any contents of this file\nwithout proper permission from the original copyright holder";
                     break;
                 case "PWAD":
                     Returner.Comments["Notice"] = "This WAD file is a PWAD or Patch-WAD. It's not part of any official file of the games using the WAD system. Please respect the original copyright holders copyrights though!";
