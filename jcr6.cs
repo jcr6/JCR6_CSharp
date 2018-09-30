@@ -373,7 +373,8 @@ namespace UseJCR6
         /// </summary>
         public string Author
         {
-            get { return datastring["__Author"]; }
+            get { if (!datastring.ContainsKey("__Author")) return "";
+				return datastring["__Author"]; }
             set { datastring["__Author"] = value; }
 
         }
