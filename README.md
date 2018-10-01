@@ -1,4 +1,4 @@
-# JCR6_Sharp (WIP)
+# JCR6_Sharp 
 
 These are just a bunch of class files you can use to read JCR6 files in C#
 
