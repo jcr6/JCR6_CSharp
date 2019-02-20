@@ -32,4 +32,6 @@ Of course, JCR6 comes "as is" and under no circumstances can I be held liable fo
 I am planning to release JCR6 as a .dll file which could be linked to at least any .NET compatible program. Documentation about its classes and how to use it, is a longer term thing. I first want it to work at all ;)
 
 
+# Notice:
 
+This repository is going to move to https://github.com/JCR6/JCR6_CSharp -- If you are already there, cool! If not, then please configure git to take it from there on. Until June 2019 I'll update both repositories, although the repository in the main is the main repository, somewhere in or after January 2020, the old repository will be removed.
