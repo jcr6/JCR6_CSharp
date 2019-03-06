@@ -55,7 +55,7 @@ namespace UseJCR6
                 JCR6.dCHAT(file + " not found!");
                 return false;
             }
-            var bt = QOpen.ReadFile(file);
+            var bt = QuickStream.ReadFile(file);
             ret = bt.Size > 10; // I don't believe a JCR6 file can even get close to that!
             ret = ret && bt.ReadString(checkheader.Length) == checkheader;
             bt.Close();
@@ -72,7 +72,7 @@ namespace UseJCR6
                 Console.WriteLine(file + " not found!");
                 return null;
             }
-            var bt = QOpen.ReadFile(file);
+            var bt = QuickStream.ReadFile(file);
             isJ = bt.Size > 10; // I don't believe a JCR6 file can even get close to that!
             isJ = isJ && bt.ReadString(checkheader.Length) == checkheader;
             if (!isJ) { JCR6.JERROR = file + " is not a JCR6 file!"; bt.Close(); return null; } // This error should NEVER be possible, unless you are using JCR6 NOT the way it was intended to be used.
@@ -132,7 +132,7 @@ namespace UseJCR6
                 return null;
             }
             var fatbytes = JCR6.CompDrivers[ret.FATstorage].Expand(fatcbytes, ret.FATsize);
-            bt = QOpen.StreamFromBytes(fatbytes, QOpen.LittleEndian); // Little Endian is the default, but I need to make sure as JCR6 REQUIRES Little Endian for its directory structures.
+            bt = QuickStream.StreamFromBytes(fatbytes, QuickStream.LittleEndian); // Little Endian is the default, but I need to make sure as JCR6 REQUIRES Little Endian for its directory structures.
             while ((!bt.EOF) && (!theend))
             {
                 var mtag = bt.ReadByte();
@@ -478,7 +478,7 @@ namespace UseJCR6
             var e = Entries[ce];
             byte[] cbuf;
             byte[] ubuf;
-            var bt = QOpen.ReadFile(e.MainFile);
+            var bt = QuickStream.ReadFile(e.MainFile);
             bt.Position = e.Offset;
             cbuf = bt.ReadBytes(e.CompressedSize);
             bt.Close();
@@ -495,7 +495,7 @@ namespace UseJCR6
         /// <param name="filename">Name of the entry in this JCR6 resource.</param>
         public Dictionary<string, string> LoadStringMapSimple(string filename)
         {
-            var bt = ReadFile(filename,QOpen.LittleEndian);
+            var bt = ReadFile(filename,QuickStream.LittleEndian);
             bt.Position = 0;
             var ret = new Dictionary<string, string>();
             //Console.WriteLine($"LSM START! {bt.Position}/{bt.Size}");
@@ -520,7 +520,7 @@ namespace UseJCR6
         /// <returns>The string map.</returns>
         /// <param name="entry">Entry in JCR6 resource.</param>
         public Dictionary<string, string> LoadStringMap(string entry){
-            var bt = ReadFile(entry, QOpen.LittleEndian);
+            var bt = ReadFile(entry, QuickStream.LittleEndian);
             if (bt == null) return null;
             var ret = new Dictionary<string, string>();
             string k;
@@ -574,12 +574,12 @@ namespace UseJCR6
         /// </summary>
         /// <returns>The QuickStream</returns>
         /// <param name="entry">>The entry name (case insensitive)</param>
-        /// <param name="endian">QOpen.LittleEndian or QOpen.BigEndian for automatic endian conversion, if set to 0 it will just read endians by the way the CPU does it.</param>
-        public QuickStream ReadFile(string entry, byte endian = QOpen.LittleEndian)
+        /// <param name="endian">QuickStream.LittleEndian or QuickStream.BigEndian for automatic endian conversion, if set to 0 it will just read endians by the way the CPU does it.</param>
+        public QuickStream ReadFile(string entry, byte endian = QuickStream.LittleEndian)
         {
             var buf = JCR_B(entry);
             if (buf == null) return null;
-            return QOpen.StreamFromBytes(buf, endian);
+            return QuickStream.StreamFromBytes(buf, endian);
         }
 
         /// <summary>
@@ -617,7 +617,7 @@ namespace UseJCR6
         //public byte[] buffer;
 
 
-        public TJCRCreateStream(TJCRCreate theparent, string theentry, string thestorage, string theauthor = "", string thenotes = "", byte Endian = QOpen.LittleEndian)
+        public TJCRCreateStream(TJCRCreate theparent, string theentry, string thestorage, string theauthor = "", string thenotes = "", byte Endian = QuickStream.LittleEndian)
         {
             entry = theentry;
             storage = thestorage;
@@ -683,7 +683,7 @@ namespace UseJCR6
         /// <param name="Author">Author name.</param>
         /// <param name="Notes">Notes.</param>
         /// <param name="Endian">Endian setting.</param>
-        public TJCRCreateStream NewEntry(string Entry, string Storage="", string Author = "", string Notes = "", byte Endian = QOpen.LittleEndian)
+        public TJCRCreateStream NewEntry(string Entry, string Storage="", string Author = "", string Notes = "", byte Endian = QuickStream.LittleEndian)
         {
 
             if (!JCR6.CompDrivers.ContainsKey(Storage)) { JCR6.JERROR = $"I cannot compress with unknown storage method \"{Storage}\""; return null; }
@@ -699,7 +699,7 @@ namespace UseJCR6
         /// <param name="Author">Author name.</param>
         /// <param name="Notes">Notes.</param>
         public void NewStringMap(Dictionary<string,string> data,string Entry,string Storage="", string Author="",string Notes=""){
-            var bt = NewEntry(Entry, Storage, Author, Notes, QOpen.LittleEndian);
+            var bt = NewEntry(Entry, Storage, Author, Notes, QuickStream.LittleEndian);
             foreach(string k in data.Keys){
                 bt.WriteByte(1);
                 bt.WriteString(k);
@@ -803,7 +803,7 @@ namespace UseJCR6
 
         public void AddFile(string OriginalFile, string Entry, string Storage="Store", string Author = "", string Notes = "")
         {
-            var rs = QOpen.ReadFile(OriginalFile);
+            var rs = QuickStream.ReadFile(OriginalFile);
             var buf = rs.ReadBytes((int)rs.Size);
             rs.Close();
             var ws = NewEntry(Entry, Storage, Author, Notes);
@@ -822,7 +822,7 @@ namespace UseJCR6
             JCR6.JERROR = "";
             // TODO: Make "Brute" always pass if asked for it in FT storage.
             if (!JCR6.CompDrivers.ContainsKey(FTStorage)) { JCR6.JERROR = $"Storage method {FTStorage} not present!"; return; }
-            mystream = QOpen.WriteFile(OutputFile, QOpen.LittleEndian);
+            mystream = QuickStream.WriteFile(OutputFile, QuickStream.LittleEndian);
             FileTableStorage = FTStorage;
             mystream.WriteString("JCR6"+(char)26,true);
             ftoffint = (int)mystream.Position;

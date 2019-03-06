@@ -52,7 +52,7 @@ namespace UseJCR6
             //var SupportLevel = false;
             var Returner = new TJCRDIR();
             TJCREntry E;
-            var BT = QOpen.ReadFile(QuakePAK, QOpen.LittleEndian);
+            var BT = QuickStream.ReadFile(QuakePAK, QuickStream.LittleEndian);
             //var Level = "";
             //Local LevelFiles$[] = ["THINGS","LINEDEFS","SIDEDEFS","VERTEXES","SEGS","SSECTORS","NODES","SECTORS","REJECT","BLOCKMAP","BEHAVIOR"] ' All files used in a DOOM/HERETIC/HEXEN level, in which I must note that "BEHAVIOR" is only used in HEXEN.
             if (BT == null)
@@ -131,7 +131,7 @@ namespace UseJCR6
         override public bool Recognize(string file)
         {
             if (!File.Exists(file)) return false;
-            var bt = QOpen.ReadFile(file);
+            var bt = QuickStream.ReadFile(file);
             if (bt == null) return false;
             if (bt.Size < 12 ){ bt.Close(); return false; }
             var head = bt.ReadString(4);

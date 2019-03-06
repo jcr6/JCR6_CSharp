@@ -42,7 +42,7 @@ namespace UseJCR6
 
         override public bool Recognize(string file)
         {
-            var BT = QOpen.ReadFile(file);
+            var BT = QuickStream.ReadFile(file);
             if (BT == null) return false;
             var Header = BT.ReadString(5);
             BT.Close();
@@ -54,7 +54,7 @@ namespace UseJCR6
         override public TJCRDIR Dir(string file)
         {
             var Ret = new TJCRDIR();
-            var BT = QOpen.ReadFile(file, QOpen.LittleEndian);
+            var BT = QuickStream.ReadFile(file, QuickStream.LittleEndian);
             var Header = "";
             var FE = new TJCREntry();
             int Tag;
