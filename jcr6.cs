@@ -587,10 +587,11 @@ namespace UseJCR6
         /// </summary>
         /// <returns>All lines of the JCR6 entry (assuming it's a text file). A (limited) support is there for recognition of DOS-text files (as used by Windows) and Unix text files (as used by Mac and Linux).</returns>
         /// <param name="entry">The entry name (case insensitive)</param>
-        public string[] ReadLines(string entry)
+        public string[] ReadLines(string entry,bool unixonly=false)
         {
             var s = LoadString(entry);
             string[] eol = new string[3]; eol[0] = "\r\n"; eol[1] = "\n\r"; eol[2] = "\n";
+            if (unixonly) return s.Split('\n');
             foreach (string eoln in eol)
             {
                 if (s.Contains(eoln))
@@ -787,6 +788,7 @@ namespace UseJCR6
         public void AddString(string mystring, string Entry, string Storage="Store", string Author = "", string Notes = "")
         {
             var s = NewEntry(Entry, Storage, Author, Notes);
+            if (s==null) return;
             s.WriteString(mystring, true);
             s.Close();
         }
