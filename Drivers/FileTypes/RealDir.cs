@@ -21,8 +21,13 @@ namespace UseJCR6{
         public bool allowhidden = false;
         public bool automerge = true;
         public override bool Recognize(string file) {
-            FileAttributes attr = File.GetAttributes(file);
-            return (attr & FileAttributes.Directory) == FileAttributes.Directory;
+            try {
+                FileAttributes attr = File.GetAttributes(file);
+                return (attr & FileAttributes.Directory) == FileAttributes.Directory;
+            } catch (Exception e) {
+                JCR6.JERROR = $"I could not analyse directory {file} for realdir scanning.\n{e.Message}";
+                return false;
+            }
         }
         public override TJCRDIR Dir(string file) => RDir(file, true);
 
