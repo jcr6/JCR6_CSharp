@@ -35,3 +35,5 @@ I am planning to release JCR6 as a .dll file which could be linked to at least a
 # Notice:
 
 This repository is going to move to https://github.com/JCR6/JCR6_CSharp -- If you are already there, cool! If not, then please configure git to take it from there on. Until June 2019 I'll update both repositories, although the repository in the main is the main repository, somewhere in or after January 2020, the old repository will be removed.
+
+If you don't see an issue tracker, then you are on the old deprecated repository, the link provided above has one, and the currently still open issues have been moved to the new issue tracker
