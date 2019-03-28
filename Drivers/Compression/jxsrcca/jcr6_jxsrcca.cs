@@ -33,7 +33,6 @@ namespace UseJCR6
 
         public JCR6_jxsrcca(bool nor = false) { if (!nor) Init(); }
 
-
         /// <summary>
         /// Call this function to install the jxsrcca driver into JCR6
         /// That's all you need to do, as JCR6 will take care of the rest ALL BY ITSELF ;)
