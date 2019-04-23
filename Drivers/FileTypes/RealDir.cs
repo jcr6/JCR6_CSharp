@@ -20,8 +20,7 @@ using TrickyUnits;
 
 namespace UseJCR6
 {
-
-
+    
 
     class JCR6_RealDir : TJCRBASEDRIVER
     {
@@ -108,7 +107,7 @@ namespace UseJCR6
                     } else {
                         foreach (string k in t.Entries.Keys) {
                             var ke = t.Entries[k];
-                            ret.Entries[$"{mf.ToUpper()}/{k}"] = ke;
+                            ret.Entries[$"{chkfile.ToUpper()}/{k}"] = ke;
                             ke.Entry = chkfile + "/" + ke.Entry;
                             ke.MainFile = mf; //+ "/" + ke.Entry;
                         }
@@ -121,7 +120,8 @@ namespace UseJCR6
                     e.Storage = "Store";
                     e.CompressedSize = (int)fi.Length;
                     e.Size = (int)fi.Length;
-                    ret.Entries[mf.ToUpper()] = e;
+                    e.Offset = 0;
+                    ret.Entries[chkfile.ToUpper()] = e;
                 }
             }
             // return the crap
