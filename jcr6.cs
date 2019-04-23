@@ -8,568 +8,264 @@
 // http://mozilla.org/MPL/2.0/.
 // Version: 19.03.27
 // EndLic
-
-
-
-
 using TrickyUnits;
-
 using System.Collections.Generic;
-
 using System;
-
 using System.IO;
 
 
-
-
-
-
-
 // required TrickyUnits:
-
 //   = mkl.cs
-
 //   = qstream.cs
 
 
 
-namespace UseJCR6
-
-{
-
+namespace UseJCR6 {
     // Basically you should not meddle with this class unless you know what you are doing.
-
     // The two abstract methods speak for itself. Compress is to make compression possible and Expand for Expansion or Decompression. 
-
     // The 'realsize' parameter has only been added as in my experience in earlier getups, so algorithms can require to know this prior to decompression.
 
-    abstract class TJCRBASECOMPDRIVER
-
-    {
-
+    abstract class TJCRBASECOMPDRIVER {
         public abstract byte[] Compress(byte[] inputbuffer);
-
         public abstract byte[] Expand(byte[] inputbuffer, int realsize);
-
     }
 
-    abstract class TJCRBASEDRIVER
-
-    {
-
+    abstract class TJCRBASEDRIVER {
         public string name = "???";
-
         public abstract bool Recognize(string file);
-
         public abstract TJCRDIR Dir(string file);
-
     }
 
 
 
-    class TJCRCStore : TJCRBASECOMPDRIVER
-
-    {
-
+    class TJCRCStore : TJCRBASECOMPDRIVER {
         public override byte[] Compress(byte[] inputbuffer) { return inputbuffer; }
-
         public override byte[] Expand(byte[] inputbuffer, int realsize) { return inputbuffer; }
-
     }
 
 
 
-    class TJCR6DRIVER : TJCRBASEDRIVER
-
-    {
-
+    class TJCR6DRIVER : TJCRBASEDRIVER {
         public TJCR6DRIVER() { name = "JCR6"; }
-
         readonly string checkheader = "JCR6" + ((char)26);
-
-        public override bool Recognize(string file)
-
-        {
-
+        public override bool Recognize(string file) {
             bool ret = false;
-
-            if (!File.Exists(file))
-
-            {
-
+            if (!File.Exists(file)) {
                 JCR6.dCHAT(file + " not found!");
-
                 return false;
-
             }
-
             var bt = QuickStream.ReadFile(file);
-
             ret = bt.Size > 10; // I don't believe a JCR6 file can even get close to that!
-
             ret = ret && bt.ReadString(checkheader.Length) == checkheader;
-
             bt.Close();
-
             //Console.WriteLine(ret);
-
             return ret;
-
         }
 
 
 
-        public override TJCRDIR Dir(string file)
-
-        {
-
+        public override TJCRDIR Dir(string file) {
             var ret = new TJCRDIR();
-
             bool isJ = false;
-
-            if (!File.Exists(file))
-
-            {
-
+            if (!File.Exists(file)) {
                 Console.WriteLine(file + " not found!");
-
                 return null;
-
             }
-
             var bt = QuickStream.ReadFile(file);
-
             isJ = bt.Size > 10; // I don't believe a JCR6 file can even get close to that!
-
             isJ = isJ && bt.ReadString(checkheader.Length) == checkheader;
-
             if (!isJ) { JCR6.JERROR = file + " is not a JCR6 file!"; bt.Close(); return null; } // This error should NEVER be possible, unless you are using JCR6 NOT the way it was intended to be used.
-
             ret.FAToffset = bt.ReadInt();
-
-            if (ret.FAToffset <= 0)
-
-            {
-
+            if (ret.FAToffset <= 0) {
                 JCR6.JERROR = "Invalid FAT offset. Maybe you are trying to read a JCR6 file that has never been properly finalized";
-
                 bt.Close();
-
                 return null;
-
             }
-
             byte TTag = 0;
-
             string Tag = "";
-
-            do
-
-            {
-
+            do {
                 TTag = bt.ReadByte();
-
                 if (TTag != 255) { Tag = bt.ReadString(); }
-
-                switch (TTag)
-
-                {
-
+                switch (TTag) {
                     case 1:
-
                         ret.CFGstr[Tag] = bt.ReadString();
-
                         break;
-
                     case 2:
-
                         ret.CFGbool[Tag] = bt.ReadByte() == 1;
-
                         break;
-
                     case 3:
-
                         ret.CFGint[Tag] = bt.ReadInt();
-
                         break;
-
                     case 255:
-
                         break;
-
                     default:
-
                         JCR6.JERROR = $"Invalid config tag ({TTag}) {file}";
-
                         bt.Close();
-
                         return null;
 
-
-
                 }
-
-
-
-
-
             } while (TTag != 255);
-
-            if (ret.CFGbool.ContainsKey("_CaseSensitive") && ret.CFGbool["_CaseSensitive"])
-
-            {
-
+            if (ret.CFGbool.ContainsKey("_CaseSensitive") && ret.CFGbool["_CaseSensitive"]) {
                 JCR6.JERROR = "Case Sensitive dir support was already deprecated and removed from JCR6 before it went to the Go language. It's only obvious that support for this was never implemented in C# in the first place.";
-
                 bt.Close();
-
                 return null;
-
             }
-
             bt.Position = ret.FAToffset;
-
             bool theend = false;
-
             ret.FATsize = bt.ReadInt();
-
             ret.FATcsize = bt.ReadInt();
-
             ret.FATstorage = bt.ReadString();
-
             //  ret.Entries = map[string]TJCR6Entry{ } // Was needed in Go, but not in C#, as unlike Go, C# DOES support field assign+define
-
             var fatcbytes = bt.ReadBytes(ret.FATcsize);
-
             bt.Close();
-
             //Console.WriteLine(ret);
-
-            if (!JCR6.CompDrivers.ContainsKey(ret.FATstorage))
-
-            {
-
+            if (!JCR6.CompDrivers.ContainsKey(ret.FATstorage)) {
                 JCR6.JERROR = "The File Table of file '" + file + "' was packed with the '" + ret.FATstorage + "' algorithm, but unfortunately I don't have drivers loaded for that one.";
-
                 return null;
-
             }
-
             var fatbytes = JCR6.CompDrivers[ret.FATstorage].Expand(fatcbytes, ret.FATsize);
-
             bt = QuickStream.StreamFromBytes(fatbytes, QuickStream.LittleEndian); // Little Endian is the default, but I need to make sure as JCR6 REQUIRES Little Endian for its directory structures.
-
-            while ((!bt.EOF) && (!theend))
-
-            {
-
+            while ((!bt.EOF) && (!theend)) {
                 var mtag = bt.ReadByte();
-
                 var ppp = bt.Position;
-
-                switch (mtag)
-
-                {
-
+                switch (mtag) {
                     case 0xff:
-
                         theend = true;
-
                         break;
-
                     case 0x01:
-
                         var tag = bt.ReadString().ToUpper(); //strings.ToUpper(qff.ReadString(btf)); 
-
-                        switch (tag)
-
-                        {
-
+                        switch (tag) {
                             case "FILE":
-
-                                var newentry = new TJCREntry();
-
-                                newentry.MainFile = file;
-
+                                var newentry = new TJCREntry {
+                                    MainFile = file
+                                };
                                 /* Not needed in C#
-
                                  * newentry.Datastring = map[string]string{}
-
                                  * newentry.Dataint = map[string]int{}
-
                                  * newentry.Databool = map[string]bool{}
-
                                  */
-
                                 var ftag = bt.ReadByte();
-
-                                while (ftag != 255)
-
-                                {
-
+                                while (ftag != 255) {
                                     //chats("FILE TAG %d", ftag)
-
-                                    switch (ftag)
-
-                                    {
-
+                                    switch (ftag) {
                                         case 1:
-
                                             var k = bt.ReadString();
-
                                             var v = bt.ReadString();
-
                                             newentry.datastring[k] = v;
-
                                             break;
-
                                         case 2:
-
                                             var kb = bt.ReadString();
-
                                             var vb = bt.ReadBoolean();
-
                                             newentry.databool[kb] = vb;
-
                                             break;
-
                                         case 3:
-
                                             var ki = bt.ReadString();
-
                                             var vi = bt.ReadInt();
-
                                             newentry.dataint[ki] = vi;
-
                                             break;
-
                                         case 255:
-
                                             break;
-
                                         default:
-
                                             // p,_:= btf.Seek(0, 1)
-
                                             JCR6.JERROR = $"Illegal tag in FILE part {ftag} on fatpos {bt.Position}";
-
                                             bt.Close();
-
                                             return null;
-
                                     }
-
                                     ftag = bt.ReadByte();
-
                                 }
-
                                 var centry = newentry.Entry.ToUpper();
-
                                 ret.Entries[centry] = newentry;
-
                                 break;
-
                             case "COMMENT":
-
                                 var commentname = bt.ReadString();
-
                                 ret.Comments[commentname] = bt.ReadString();
-
                                 break;
-
                             case "IMPORT":
-
                             case "REQUIRE":
-
                                 //if impdebug {
-
                                 //    fmt.Printf("%s request from %s\n", tag, file)
-
                                 //                    }
-
                                 // Now we're playing with power. Tha ability of 
-
                                 // JCR6 to automatically patch other files into 
-
                                 // one resource
-
                                 var deptag = bt.ReadByte();
-
                                 string depk;
-
                                 string depv;
-
                                 var depm = new Dictionary<string, string>();
-
-                                while (deptag != 255)
-
-                                {
-
+                                while (deptag != 255) {
                                     depk = bt.ReadString();
-
                                     depv = bt.ReadString();
-
                                     depm[depk] = depv;
-
                                     deptag = bt.ReadByte();
-
                                 }
-
                                 var depfile = depm["File"];
-
                                 //depsig   := depm["Signature"]
-
                                 var deppatha = depm.ContainsKey("AllowPath") && depm["AllowPath"] == "TRUE";
-
                                 var depcall = "";
-
                                 // var depgetpaths[2][] string
-
                                 List<string>[] depgetpaths = new List<string>[2];
-
                                 depgetpaths[0] = new List<string>();
-
                                 depgetpaths[1] = new List<string>();
-
                                 var owndir = Path.GetDirectoryName(file);
-
                                 int deppath = 0;
-
                                 /*if impdebug{
-
                                     fmt.Printf("= Wanted file: %s\n",depfile)
-
                                        fmt.Printf("= Allow Path:  %d\n",deppatha)
-
                                        fmt.Printf("= ValConv:     %d\n",deppath)
-
                                        fmt.Printf("= Prio entnum  %d\n",len(ret.Entries))
-
                                 }*/
-
-                                if (deppatha)
-
-                                {
-
+                                if (deppatha) {
                                     deppath = 1;
-
                                 }
-
                                 if (owndir != "") { owndir += "/"; }
-
                                 depgetpaths[0].Add(owndir);
-
                                 depgetpaths[1].Add(owndir);
-
                                 // TODO: JCR6: depgetpaths[1] = append(depgetpaths[1], dirry.Dirry("$AppData$/JCR6/Dependencies/") )
-
-                                if (qstr.Left(depfile, 1) != "/" && qstr.Left(depfile, 2) != ":")
-
-                                {
-
+                                if (qstr.Left(depfile, 1) != "/" && qstr.Left(depfile, 2) != ":") {
                                     foreach (string depdir in depgetpaths[deppath]) //for _,depdir:=range depgetpaths[deppath]
-
                                     {
-
-                                        if ((depcall == "") && File.Exists(depdir + depfile))
-
-                                        {
-
+                                        if ((depcall == "") && File.Exists(depdir + depfile)) {
                                             depcall = depdir + depfile;
-
                                         } /*else if (depcall=="" && impdebug ){
-
                                             if !qff.Exists(depdir+depfile) {
-
                                                 fmt.Printf("It seems %s doesn't exist!!\n",depdir+depfile)
-
                                             }*/
-
                                     }
-
-                                }
-
-                                else
-
-                                {
-
-                                    if (File.Exists(depfile))
-
-                                    {
-
+                                } else {
+                                    if (File.Exists(depfile)) {
                                         depcall = depfile;
-
                                     }
-
                                 }
-
-                                if (depcall != "")
-
-                                {
-
+                                if (depcall != "") {
                                     ret.PatchFile(depcall);
-
-                                    if (JCR6.JERROR != "" && tag == "REQUIRE")
-
-                                    {//((!ret.PatchFile(depcall)) && tag=="REQUIRE"){
-
+                                    if (JCR6.JERROR != "" && tag == "REQUIRE") {//((!ret.PatchFile(depcall)) && tag=="REQUIRE"){
                                         JCR6.JERROR = "Required JCR6 addon file (" + depcall + ") could not imported! Importer reported: " + JCR6.JERROR; //,fil,"N/A","JCR 6 Driver: Dir()")
-
                                         bt.Close();
-
                                         return null;
-
-                                    }
-
-                                    else if (tag == "REQUIRE")
-
-                                    {
-
+                                    } else if (tag == "REQUIRE") {
                                         JCR6.JERROR = "Required JCR6 addon file (" + depcall + ") could not found!"; //,fil,"N/A","JCR 6 Driver: Dir()")
-
                                         bt.Close();
-
                                         return null;
-
                                     }
-
                                 } /*else if impdebug {
-
                                     fmt.Printf("Importing %s failed!", depfile);
-
                                     fmt.Printf("Request:    %s", tag);
-
                                 }*/
-
                                 break;
-
                         }
-
                         break;
-
                     default:
-
                         JCR6.JERROR = $"Unknown main tag {mtag}, at file table position ";
-
                         JCR6.JERROR += bt.Position;
-
                         bt.Close();
-
                         return null;
-
                 }
-
             }
-
             bt.Close();
-
             return ret; // Actual reader comes later.
-
         }
-
     }
-
+}
 
 
 
@@ -704,14 +400,9 @@ namespace UseJCR6
 
         /// </summary>
 
-        public int Offset
-
-        {
-
+        public int Offset {
             get { return dataint["__Offset"]; }
-
             set { dataint["__Offset"] = value; }
-
         }
 
         /// <summary>
@@ -1328,21 +1019,22 @@ namespace UseJCR6
 
             if (storage != "Store" && rawbuff.Length <= cmpbuff.Length) { cmpbuff = rawbuff; astorage = "Store"; }
 
-            var NEntry = new TJCREntry();
+            var NEntry = new TJCREntry
+            {
+                Entry = entry,
 
-            NEntry.Entry = entry;
+                Size = rawbuff.Length,
 
-            NEntry.Size = rawbuff.Length;
+                CompressedSize = cmpbuff.Length,
 
-            NEntry.CompressedSize = cmpbuff.Length;
+                Offset = (int)parent.mystream.Position,
 
-            NEntry.Offset = (int)parent.mystream.Position;
+                Author = author,
 
-            NEntry.Author = author;
+                Notes = notes,
 
-            NEntry.Notes = notes;
-
-            NEntry.Storage = astorage;
+                Storage = astorage
+            };
 
             NEntry.datastring["__JCR6FOR"] = "C#";
 
@@ -1528,11 +1220,12 @@ namespace UseJCR6
 
             var OEntry = Entries[original.ToUpper()];
 
-            var TEntry = new TJCREntry();
+            var TEntry = new TJCREntry
+            {
+                Entry = target,
 
-            TEntry.Entry = target;
-
-            TEntry.MainFile = MainFile;
+                MainFile = MainFile
+            };
 
             foreach (string k in OEntry.datastring.Keys) { TEntry.datastring[k] = OEntry.datastring[k]; }
 
@@ -1829,81 +1522,40 @@ namespace UseJCR6
 
 
         /// <summary>
-
         /// Recognize the specified file for use for JCR6. You'll rarely need this yourself, JCR6.Dir calls it to know which driver it needs.
-
         /// </summary>
-
         /// <returns>The name of the driver needed to load this file with JCR6, or NONE if the file has not been recognized.</returns>
-
         /// <param name="file">JCR resource.</param>
-
         static public string Recognize(string file)
-
         {
-
             var ret = "NONE";
-
             JERROR = "";
-
-            foreach (string k in FileDrivers.Keys)
-
-            { // k, v := range JCR6Drivers        
-
-              // chat("Is " + file + " of type " + k + "?")            
-
-              //fmt.Printf("key[%s] value[%s]\n", k, v)
-
+            foreach (string k in FileDrivers.Keys) { // k, v := range JCR6Drivers        
+                                                     // chat("Is " + file + " of type " + k + "?")            
+                                                     //fmt.Printf("key[%s] value[%s]\n", k, v)
                 dCHAT("Testing format: " + k);
-
                 var v = FileDrivers[k];
-
-                if (v.Recognize(file))
-
-                {
-
+                if (v.Recognize(file)) {
                     ret = k;
-
                 }
-
             }
-
             return ret;
-
         }
 
 
-
         /// <summary>
-
         /// Get the directory of a JCR resource.
-
         /// All known drivers will be tried automatically.
-
         /// </summary>
-
         /// <returns>The directory class.</returns>
-
         /// <param name="file">The file holding the JCR6 resource (or the directory in case of a real-dir, *if* the dirver is loaded that is).</param>
-
-        static public TJCRDIR Dir(string file)
-
-        {
-
+        static public TJCRDIR Dir(string file) {
             var t = Recognize(file);
-
-            if (t == "NONE")
-
-            {
-
+            if (t == "NONE") {
                 JERROR = "\"" + file + "\" has not been recognized as any kind of file JCR6 supports";
-
                 return null;
-
             }
-
             return FileDrivers[t].Dir(file);
-
         }
 
 
