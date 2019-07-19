@@ -8,6 +8,9 @@
 // http://mozilla.org/MPL/2.0/.
 // Version: 19.03.27
 // EndLic
+
+#undef jcr6debugchat
+
 using TrickyUnits;
 using System.Collections.Generic;
 using System;
@@ -265,7 +268,7 @@ namespace UseJCR6 {
             return ret; // Actual reader comes later.
         }
     }
-}
+
 
 
 
@@ -275,170 +278,95 @@ namespace UseJCR6 {
 
 
     /// <summary>
-
     /// This class is used to store all information about an entry living inside a JCR6 file.
-
     /// </summary>
-
-    class TJCREntry
-
-    {
-
+    class TJCREntry {
         /// <summary>
-
         /// Will contain the filename of the resource file this entry lives in (this is most of all important for multi-file resources).
-
         /// </summary>
-
         public string MainFile = "";
 
         /// <summary>
-
         /// Contains string data about the entry. The nice part is that you can add fields to it to your liking if you want, but please keep in mind that all fields prefixed with two underscores are considered to be part of JCR6 itself and should not be used if you don't want conflicts with future versions.
-
         /// </summary>
-
         public Dictionary<string, string> datastring = new Dictionary<string, string>();
 
         /// <summary>
-
         /// Contains integer data about the entry. The nice part is that you can add fields to it to your liking if you want, but please keep in mind that all fields prefixed with two underscores are considered to be part of JCR6 itself and should not be used if you don't want conflicts with future versions.
-
         /// </summary>
-
         public Dictionary<string, int> dataint = new Dictionary<string, int>();
 
         /// <summary>
-
         /// Contains boolean data about the entry. The nice part is that you can add fields to it to your liking if you want, but please keep in mind that all fields prefixed with two underscores are considered to be part of JCR6 itself and should not be used if you don't want conflicts with future versions.
-
         /// </summary>
-
         public Dictionary<string, bool> databool = new Dictionary<string, bool>();
 
         /// <summary>
-
         /// Contains the true name of the entry. Also with its regular upper and lower case settings.
-
         /// </summary>
-
-        public string Entry
-
-        {
-
+        public string Entry {
             get { return datastring["__Entry"]; }
-
             set { datastring["__Entry"] = value; }
-
         }
 
         /// <summary>
-
         /// Gets or sets the size of an entry (setting should only be done by JCR6 write classes itself) without compression.
-
         /// </summary>
-
-        public int Size
-
-        {
-
-            get
-
-            {
-
+        public int Size {
+            get {
                 return dataint["__Size"];
-
             }
-
-            set
-
-            {
-
+            set {
                 dataint["__Size"] = value;
-
             }
-
         }
 
         /// <summary>
-
         /// Gets or sets the compressed size of an entry (setting should only be done by JCR6 write classes itself)
-
         /// </summary>
-
-        public int CompressedSize
-
-        {
-
+        public int CompressedSize {
             get { return dataint["__CSize"]; }
-
             set { dataint["__CSize"] = value; }
-
         }
 
         /// <summary>
-
         /// Contains a string presentation of the ratio in %.
-
         /// Please note, JCR6 doesn't tell you how much smaller it is, but how to how much % the file has been reduced.
-
         /// </summary>
-
-        public string Ratio{ get {
-
+        public string Ratio {
+            get {
                 if (Size <= 0) return "N/A";
-
                 return $"{Math.Floor((double)(((double)CompressedSize / Size) * (double)100))}%";
-
-            }}
+            }
+        }
 
 
 
         /// <summary>
-
         /// Gets or sets the offset of an entry inside its mainfile. (setting should only be done by JCR6 write classes itself)
-
         /// </summary>
-
         public int Offset {
             get { return dataint["__Offset"]; }
             set { dataint["__Offset"] = value; }
         }
 
         /// <summary>
-
         /// Which compression algorithm has been used to compress this entry?
-
         /// </summary>
-
-        public string Storage
-
-        {
-
+        public string Storage {
             get { return datastring["__Storage"]; }
-
             set { datastring["__Storage"] = value; }
-
         }
 
         /// <summary>
-
         /// Gets or sets the author of this entry. This can be handy when you make use of 3rd party assets in your projects.
-
         /// </summary>
-
-        public string Author
-
-        {
-
-            get { if (!datastring.ContainsKey("__Author")) return "";
-
-				return datastring["__Author"]; }
-
+        public string Author {
+            get {
+                if (!datastring.ContainsKey("__Author")) return "";
+                return datastring["__Author"];
+            }
             set { datastring["__Author"] = value; }
-
-
-
         }
 
         /// <summary>
@@ -447,15 +375,14 @@ namespace UseJCR6 {
 
         /// </summary>
 
-        public string Notes
-
-        {
+        public string Notes {
 
             get {
 
                 if (!datastring.ContainsKey("__Notes")) return "";
 
-                return datastring["__Notes"]; }
+                return datastring["__Notes"];
+            }
 
             set { datastring["__Notes"] = value; }
 
@@ -491,9 +418,7 @@ namespace UseJCR6 {
 
     /// </summary>
 
-    class TJCRDIR
-
-    {
+    class TJCRDIR {
 
         public int FAToffset;
 
@@ -525,7 +450,7 @@ namespace UseJCR6 {
 
         public int CountEntries {
 
-            get{
+            get {
 
                 var ret = 0;
 
@@ -565,17 +490,13 @@ namespace UseJCR6 {
 
         /// <param name="file">File.</param>
 
-        public void PatchFile(string file)
-
-        {
+        public void PatchFile(string file) {
 
             JCR6.dCHAT($"Patching: {file}");
 
             var p = JCR6.Dir(file);
 
-            if (p == null)
-
-            {
+            if (p == null) {
 
                 JCR6.JERROR = ("PATCH ERROR:" + JCR6.JERROR);
 
@@ -595,9 +516,7 @@ namespace UseJCR6 {
 
         /// <param name="pdata">Pdata.</param>
 
-        public void Patch(TJCRDIR pdata)
-
-        {
+        public void Patch(TJCRDIR pdata) {
 
             foreach (string k in pdata.CFGstr.Keys) { this.CFGstr[k] = pdata.CFGstr[k]; }
 
@@ -625,9 +544,7 @@ namespace UseJCR6 {
 
         /// <param name="entry">The entry name (case insensitive)</param>
 
-        public byte[] JCR_B(string entry)
-
-        {
+        public byte[] JCR_B(string entry) {
 
             JCR6.JERROR = "";
 
@@ -671,11 +588,9 @@ namespace UseJCR6 {
 
         /// <param name="filename">Name of the entry in this JCR6 resource.</param>
 
-        public Dictionary<string, string> LoadStringMapSimple(string filename)
+        public Dictionary<string, string> LoadStringMapSimple(string filename) {
 
-        {
-
-            var bt = ReadFile(filename,QuickStream.LittleEndian);
+            var bt = ReadFile(filename, QuickStream.LittleEndian);
 
             bt.Position = 0;
 
@@ -683,9 +598,7 @@ namespace UseJCR6 {
 
             //Console.WriteLine($"LSM START! {bt.Position}/{bt.Size}");
 
-            while (!bt.EOF)
-
-            {
+            while (!bt.EOF) {
 
                 //Console.WriteLine($"LSM: {bt.Position}/{bt.Size}");
 
@@ -723,7 +636,7 @@ namespace UseJCR6 {
 
         /// <param name="entry">Entry in JCR6 resource.</param>
 
-        public Dictionary<string, string> LoadStringMap(string entry){
+        public Dictionary<string, string> LoadStringMap(string entry) {
 
             var bt = ReadFile(entry, QuickStream.LittleEndian);
 
@@ -735,11 +648,11 @@ namespace UseJCR6 {
 
             string v;
 
-            while (true){
+            while (true) {
 
                 var tag = bt.ReadByte();
 
-                switch(tag){
+                switch (tag) {
 
                     case 1:
 
@@ -773,9 +686,7 @@ namespace UseJCR6 {
 
 
 
-        public SortedDictionary<string, string> LoadStringMapSorted(string entry)
-
-        {
+        public SortedDictionary<string, string> LoadStringMapSorted(string entry) {
 
             var bt = ReadFile(entry, QuickStream.LittleEndian);
 
@@ -837,16 +748,10 @@ namespace UseJCR6 {
 
         /// <param name="entry">The entry name (case insensitive)</param>
 
-        public string LoadString(string entry)
-
-        {
-
+        public string LoadString(string entry) {
             var buf = JCR_B(entry);
-
             if (buf == null) return "";
-
             return System.Text.Encoding.Default.GetString(buf);
-
         }
 
 
@@ -861,9 +766,7 @@ namespace UseJCR6 {
 
         /// <param name="entry">The entry name (case insensitive)</param>
 
-        public MemoryStream AsMemoryStream(string entry)
-
-        {
+        public MemoryStream AsMemoryStream(string entry) {
 
             var buf = JCR_B(entry);
 
@@ -887,9 +790,7 @@ namespace UseJCR6 {
 
         /// <param name="endian">QuickStream.LittleEndian or QuickStream.BigEndian for automatic endian conversion, if set to 0 it will just read endians by the way the CPU does it.</param>
 
-        public QuickStream ReadFile(string entry, byte endian = QuickStream.LittleEndian)
-
-        {
+        public QuickStream ReadFile(string entry, byte endian = QuickStream.LittleEndian) {
 
             var buf = JCR_B(entry);
 
@@ -911,9 +812,7 @@ namespace UseJCR6 {
 
         /// <param name="entry">The entry name (case insensitive)</param>
 
-        public string[] ReadLines(string entry,bool unixonly=false)
-
-        {
+        public string[] ReadLines(string entry, bool unixonly = false) {
 
             var s = LoadString(entry);
 
@@ -921,13 +820,9 @@ namespace UseJCR6 {
 
             if (unixonly) return s.Split('\n');
 
-            foreach (string eoln in eol)
+            foreach (string eoln in eol) {
 
-            {
-
-                if (s.Contains(eoln))
-
-                {
+                if (s.Contains(eoln)) {
 
                     var sp = new System.Text.RegularExpressions.Regex(eoln);
 
@@ -947,9 +842,7 @@ namespace UseJCR6 {
 
 
 
-    class TJCRCreateStream
-
-    {
+    class TJCRCreateStream {
 
         readonly QuickStream stream;
 
@@ -971,9 +864,7 @@ namespace UseJCR6 {
 
 
 
-        public TJCRCreateStream(TJCRCreate theparent, string theentry, string thestorage, string theauthor = "", string thenotes = "", byte Endian = QuickStream.LittleEndian)
-
-        {
+        public TJCRCreateStream(TJCRCreate theparent, string theentry, string thestorage, string theauthor = "", string thenotes = "", byte Endian = QuickStream.LittleEndian) {
 
             entry = theentry;
 
@@ -985,7 +876,7 @@ namespace UseJCR6 {
 
             memstream = new MemoryStream();
 
-            stream = new QuickStream(memstream,Endian);
+            stream = new QuickStream(memstream, Endian);
 
             parent = theparent;
 
@@ -1005,34 +896,20 @@ namespace UseJCR6 {
 
         public void WriteBytes(byte[] b, bool ce = false) => stream.WriteBytes(b, ce);
 
-        public void Close()
-
-        {
-
+        public void Close() {
             var rawbuff = memstream.ToArray();
-
             var cmpbuff = JCR6.CompDrivers[storage].Compress(rawbuff);
-
             var astorage = storage;
-
             // TODO: "BRUTE" support entry closure
-
             if (storage != "Store" && rawbuff.Length <= cmpbuff.Length) { cmpbuff = rawbuff; astorage = "Store"; }
 
-            var NEntry = new TJCREntry
-            {
+            var NEntry = new TJCREntry {
                 Entry = entry,
-
                 Size = rawbuff.Length,
-
                 CompressedSize = cmpbuff.Length,
-
                 Offset = (int)parent.mystream.Position,
-
                 Author = author,
-
                 Notes = notes,
-
                 Storage = astorage
             };
 
@@ -1056,142 +933,82 @@ namespace UseJCR6 {
 
 
 
-    class TJCRCreate
-
-    {
-
-
+    class TJCRCreate {
 
         public QuickStream mystream;
-
         public Dictionary<TJCRCreateStream, string> OpenEntries = new Dictionary<TJCRCreateStream, string>();
-
         public Dictionary<string, TJCREntry> Entries = new Dictionary<string, TJCREntry>();
-
         Dictionary<string, string> Comments = new Dictionary<string, string>();
 
 
-
         readonly string FileTableStorage;
-
         readonly int ftoffint;
-
         readonly string MainFile;
-
-
 
         bool closed = false;
 
 
 
         /// <summary>
-
         /// Creates a stream for an entry you want to add to the JCR6 resource. 
-
         /// </summary>
-
         /// <remarks>JCR6 uses memory streams for this, so whatever you add to this, keep the limitations of your RAM in mind.</remarks>
-
         /// <returns>The entry's stream.</returns>
-
         /// <param name="Entry">Entry name.</param>
-
         /// <param name="Storage">Storage/compression algorithm.</param>
-
         /// <param name="Author">Author name.</param>
-
         /// <param name="Notes">Notes.</param>
-
         /// <param name="Endian">Endian setting.</param>
-
-        public TJCRCreateStream NewEntry(string Entry, string Storage="Store", string Author = "", string Notes = "", byte Endian = QuickStream.LittleEndian)
-
-        {
-
-
-
+        public TJCRCreateStream NewEntry(string Entry, string Storage = "Store", string Author = "", string Notes = "", byte Endian = QuickStream.LittleEndian) {
             if (!JCR6.CompDrivers.ContainsKey(Storage)) { JCR6.JERROR = $"I cannot compress with unknown storage method \"{Storage}\""; return null; }
-
-            return new TJCRCreateStream(this, Entry, Storage, Author, Notes,Endian);
-
+            return new TJCRCreateStream(this, Entry, Storage, Author, Notes, Endian);
         }
 
 
 
         /// <summary>
-
         /// Saves a stringmap (Dictionary&lt;string,string&gt;&lt;/string&gt;) into a JCR6 file as an entry
-
         /// </summary>
-
         /// <param name="data">The stringmap in question</param>
-
         /// <param name="Entry">Entry name.</param>
-
         /// <param name="Storage">Storage algorith.</param>
-
         /// <param name="Author">Author name.</param>
-
         /// <param name="Notes">Notes.</param>
-
-        public void NewStringMap(Dictionary<string,string> data,string Entry,string Storage="Store", string Author="",string Notes=""){
-
+        public void NewStringMap(Dictionary<string, string> data, string Entry, string Storage = "Store", string Author = "", string Notes = "") {
             var bt = NewEntry(Entry, Storage, Author, Notes, QuickStream.LittleEndian);
-
-            foreach(string k in data.Keys){
-
-                bt.WriteByte(1);
-
-                bt.WriteString(k);
-
-                bt.WriteString(data[k]);
-
+            if (bt==null) {
+                JCR6.JERROR = $"Failed to create entry {Entry}, with storage method {Storage}!\t{JCR6.JERROR}";
+                return;
             }
-
-            bt.WriteByte(255);
-
-            bt.Close();
-
-        }
-
-
-
-        /// <summary>
-
-        /// Saves a stringmap (SortedDictionary&lt;string,string&gt;&lt;/string&gt;) into a JCR6 file as an entry
-
-        /// </summary>
-
-        /// <param name="data">The stringmap in question</param>
-
-        /// <param name="Entry">Entry name.</param>
-
-        /// <param name="Storage">Storage algorith.</param>
-
-        /// <param name="Author">Author name.</param>
-
-        /// <param name="Notes">Notes.</param>
-
-        public void NewStringMap(SortedDictionary<string, string> data, string Entry, string Storage = "Store", string Author = "", string Notes = "")
-
-        {
-
-            var bt = NewEntry(Entry, Storage, Author, Notes, QuickStream.LittleEndian);
-
             foreach (string k in data.Keys) {
-
                 bt.WriteByte(1);
-
                 bt.WriteString(k);
-
                 bt.WriteString(data[k]);
-
             }
-
             bt.WriteByte(255);
-
             bt.Close();
 
+        }
+
+
+
+        /// <summary>
+        /// Saves a stringmap (SortedDictionary&lt;string,string&gt;&lt;/string&gt;) into a JCR6 file as an entry
+        /// </summary>
+        /// <param name="data">The stringmap in question</param>
+        /// <param name="Entry">Entry name.</param>
+        /// <param name="Storage">Storage algorith.</param>
+        /// <param name="Author">Author name.</param>
+        /// <param name="Notes">Notes.</param>
+        public void NewStringMap(SortedDictionary<string, string> data, string Entry, string Storage = "Store", string Author = "", string Notes = "") {
+            var bt = NewEntry(Entry, Storage, Author, Notes, QuickStream.LittleEndian);
+            foreach (string k in data.Keys) {
+                bt.WriteByte(1);
+                bt.WriteString(k);
+                bt.WriteString(data[k]);
+            }
+            bt.WriteByte(255);
+            bt.Close();
         }
 
 
@@ -1199,163 +1016,108 @@ namespace UseJCR6 {
 
 
         /// <summary>
-
         /// Creates an "alias" of a JCR6 entry. In JCR6 an "Alias" is just a second entry poiting to the same data as another entry. With advanced JCR6 usage, this can sometimes make your life a lot easier.
-
         /// </summary>
-
         /// <remarks>If the target already exists, JCR6 will just override the reference, but NOT the data, so that can lead to unaccesible data in your JCR6 file. Second, JCR6 is NOT able to tell which entry is the "orginal" and which is the "target". For JCR6 they are just two separate entries and it really doesn't care that all their pointer data is the same.
-
         /// </remarks>
-
         /// <param name="original">Original entry.</param>
-
         /// <param name="target">Target entry.</param>
-
-        public void Alias(string original, string target)
-
-        {
-
+        public void Alias(string original, string target) {
             if (!Entries.ContainsKey(original.ToUpper())) { JCR6.JERROR = $"Cannot alias {original}. Entry not found!"; return; }
-
             var OEntry = Entries[original.ToUpper()];
-
-            var TEntry = new TJCREntry
-            {
+            var TEntry = new TJCREntry {
                 Entry = target,
-
                 MainFile = MainFile
             };
-
             foreach (string k in OEntry.datastring.Keys) { TEntry.datastring[k] = OEntry.datastring[k]; }
-
             foreach (string k in OEntry.dataint.Keys) { TEntry.dataint[k] = OEntry.dataint[k]; }
-
             foreach (string k in OEntry.databool.Keys) { TEntry.databool[k] = OEntry.databool[k]; }
-
+            TEntry.Entry = target; // Make sure the correct filename is there... :-/
+            Entries[target.ToUpper()] = TEntry;
         }
 
+        class TImport {
+            public string file, deptype, sig;
+            public TImport(string f,string s, string d) { file = f; deptype = d;sig = s; }
+        }
+        List<TImport> Dependencies = new List<TImport>();
+
+        public void AddDependency(string file, string sig, string deptype) => Dependencies.Add(new TImport(file, sig, deptype));
+        public void Import(string file, string sig = "") => AddDependency(file, sig, "IMPORT");
+        public void Require(string file, string sig = "") => AddDependency(file, sig, "REQUIRE");
 
 
 
 
-
-
-        public void CloseAllEntries()
-
-        {
-
+        public void CloseAllEntries() {
             List<TJCRCreateStream> tl = new List<TJCRCreateStream>();
-
             foreach (TJCRCreateStream s in OpenEntries.Keys) { tl.Add(s); }
-
             foreach (TJCRCreateStream s in tl) { s.Close(); }
-
         }
 
 
 
         /// <summary>
-
         /// Closes and finalizes JCR6 file so it's ready for usage.
-
         /// All Streams attacked to this JCR6 creation instance will automatically be closed and added according to their settings respectively.
-
         /// </summary>
-
-        public void Close()
-
-        {
-
+        public void Close() {
             if (closed) return;
-
             CloseAllEntries();
-
             var whereami = mystream.Position;
-
             mystream.Position = ftoffint;
-
             mystream.WriteInt((int)whereami);
-
             mystream.Position = whereami;
-
             // TODO: finalizing JCR6 file
-
             var ms = new MemoryStream();
-
             var bt = new QuickStream(ms);
-
-            foreach (string k in Comments.Keys)
-
-            {
-
+            foreach (string k in Comments.Keys) {
                 bt.WriteByte(1);
-
                 bt.WriteString("COMMENT");
-
                 bt.WriteString(k);
-
                 bt.WriteString(Comments[k]);
-
             }
-
-            foreach(string k in Entries.Keys){
-
+            foreach (string k in Entries.Keys) {
                 bt.WriteByte(1);
-
                 bt.WriteString("FILE");
-
                 var E = Entries[k];
-
                 foreach (string k2 in E.datastring.Keys) { bt.WriteByte(1); bt.WriteString(k2); bt.WriteString(E.datastring[k2]); }
-
                 foreach (string k2 in E.databool.Keys) { bt.WriteByte(2); bt.WriteString(k2); bt.WriteBool(E.databool[k2]); }
-
                 foreach (string k2 in E.dataint.Keys) { bt.WriteByte(3); bt.WriteString(k2); bt.WriteInt(E.dataint[k2]); }
-
                 bt.WriteByte(255);
-
             }
-
+            foreach (TImport dependency in Dependencies) {
+                bt.WriteByte(1);
+                bt.WriteString(dependency.deptype);
+                bt.WriteByte(1); bt.WriteString("File"); bt.WriteString(dependency.file);
+                bt.WriteByte(1); bt.WriteString("Signature"); bt.WriteString(dependency.sig);
+                bt.WriteByte(255);
+            }
             bt.WriteByte(255);
 
             // TODO: "BRUTE" support file table storage
-
             //Console.WriteLine($"Write on {whereami}/{mystream.Position}");
 
             var unpacked = ms.ToArray();
-
             var fts = FileTableStorage;
-
             var packed = JCR6.CompDrivers[FileTableStorage].Compress(unpacked);
-
             if (fts != "Store" || packed.Length >= unpacked.Length) { packed = unpacked; fts = "Store"; }
-
             bt.Close();
-
             mystream.WriteInt(unpacked.Length);
-
             mystream.WriteInt(packed.Length);
-
             mystream.WriteString(fts);
-
             mystream.WriteBytes(packed);
-
             mystream.Close();
-
             closed = true;
-
         }
 
 
 
-        public void AddString(string mystring, string Entry, string Storage="Store", string Author = "", string Notes = "")
-
-        {
+        public void AddString(string mystring, string Entry, string Storage = "Store", string Author = "", string Notes = "") {
 
             var s = NewEntry(Entry, Storage, Author, Notes);
 
-            if (s==null) return;
+            if (s == null) return;
 
             s.WriteString(mystring, true);
 
@@ -1365,9 +1127,7 @@ namespace UseJCR6 {
 
 
 
-        public void AddBytes(byte[] mybuffer, string Entry, string Storage = "Store", string Author = "", string Notes = "")
-
-        {
+        public void AddBytes(byte[] mybuffer, string Entry, string Storage = "Store", string Author = "", string Notes = "") {
 
             var s = NewEntry(Entry, Storage, Author, Notes);
 
@@ -1381,9 +1141,7 @@ namespace UseJCR6 {
 
 
 
-        public void AddFile(string OriginalFile, string Entry, string Storage="Store", string Author = "", string Notes = "")
-
-        {
+        public void AddFile(string OriginalFile, string Entry, string Storage = "Store", string Author = "", string Notes = "") {
 
             var rs = QuickStream.ReadFile(OriginalFile);
 
@@ -1401,54 +1159,31 @@ namespace UseJCR6 {
 
 
 
-        public void AddComment(string name, string comment)
-
-        {
-
+        public void AddComment(string name, string comment) {
             Comments[name] = comment;
-
         }
 
 
 
 
 
-        public TJCRCreate(string OutputFile, string FTStorage = "Store", string Signature = "")
-
-        {
-
+        public TJCRCreate(string OutputFile, string FTStorage = "Store", string Signature = "") {
             JCR6.JERROR = "";
-
             // TODO: Make "Brute" always pass if asked for it in FT storage.
-
             if (!JCR6.CompDrivers.ContainsKey(FTStorage)) { JCR6.JERROR = $"Storage method {FTStorage} not present!"; return; }
-
             mystream = QuickStream.WriteFile(OutputFile, QuickStream.LittleEndian);
-
             FileTableStorage = FTStorage;
-
-            mystream.WriteString("JCR6"+(char)26,true);
-
+            mystream.WriteString("JCR6" + (char)26, true);
             ftoffint = (int)mystream.Position;
-
             MainFile = OutputFile;
-
             mystream.WriteInt(0);
-
             mystream.WriteByte(1);
-
             mystream.WriteString("__Signature");
-
             mystream.WriteString(Signature);
-
             mystream.WriteByte(2);
-
             mystream.WriteString("__CaseSensitive");
-
             mystream.WriteByte(0);
-
             mystream.WriteByte(255);
-
         }
 
 
@@ -1471,30 +1206,20 @@ namespace UseJCR6 {
 
     /// </summary>
 
-    class JCR6
-
-    {
-
-        public const bool dbg = false;
-
-
+    class JCR6 {
+        //public const bool dbg = false;
 
         // Better leave these alone all the time!
-
         // They are basically only used for drivier initiation, and since other classes must be able to do that, they are (for now) public.
-
         public static Dictionary<string, TJCRBASECOMPDRIVER> CompDrivers = new Dictionary<string, TJCRBASECOMPDRIVER>();
-
         public static Dictionary<string, TJCRBASEDRIVER> FileDrivers = new Dictionary<string, TJCRBASEDRIVER>();
 
 
 
-        public static void dCHAT(string s)
-
-        {
-
-            if (dbg) { Console.WriteLine(s); }
-
+        public static void dCHAT(string s) {
+#if jcr6debugchat
+                Console.WriteLine(s);
+#endif
         }
 
 
@@ -1503,20 +1228,11 @@ namespace UseJCR6 {
 
         static public string JERROR = "";
 
-
-
-        static JCR6()
-
-        {
-
-            MKL.Version("JCR6 - jcr6.cs","19.03.27");
-
-            MKL.Lic    ("JCR6 - jcr6.cs","Mozilla Public License 2.0");
-
+        static JCR6() {
+            MKL.Version("JCR6 - jcr6.cs", "19.03.27");
+            MKL.Lic("JCR6 - jcr6.cs", "Mozilla Public License 2.0");
             CompDrivers["Store"] = new TJCRCStore();
-
             FileDrivers["JCR6"] = new TJCR6DRIVER();
-
         }
 
 
@@ -1526,8 +1242,7 @@ namespace UseJCR6 {
         /// </summary>
         /// <returns>The name of the driver needed to load this file with JCR6, or NONE if the file has not been recognized.</returns>
         /// <param name="file">JCR resource.</param>
-        static public string Recognize(string file)
-        {
+        static public string Recognize(string file) {
             var ret = "NONE";
             JERROR = "";
             foreach (string k in FileDrivers.Keys) { // k, v := range JCR6Drivers        
