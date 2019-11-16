@@ -6,7 +6,7 @@
 // Mozilla Public License, v. 2.0. If a copy of the MPL was not
 // distributed with this file, You can obtain one at
 // http://mozilla.org/MPL/2.0/.
-// Version: 19.03.27
+// Version: 19.11.16
 // EndLic
 
 #undef jcr6debugchat
@@ -281,10 +281,15 @@ namespace UseJCR6 {
     /// This class is used to store all information about an entry living inside a JCR6 file.
     /// </summary>
     class TJCREntry {
+
+        private string _mainfile;
         /// <summary>
         /// Will contain the filename of the resource file this entry lives in (this is most of all important for multi-file resources).
         /// </summary>
-        public string MainFile = "";
+        public string MainFile {
+            get => _mainfile;
+            set { _mainfile = value.Replace("\\", "/"); }
+        }
 
         /// <summary>
         /// Contains string data about the entry. The nice part is that you can add fields to it to your liking if you want, but please keep in mind that all fields prefixed with two underscores are considered to be part of JCR6 itself and should not be used if you don't want conflicts with future versions.
@@ -376,18 +381,11 @@ namespace UseJCR6 {
         /// </summary>
 
         public string Notes {
-
             get {
-
                 if (!datastring.ContainsKey("__Notes")) return "";
-
                 return datastring["__Notes"];
             }
-
             set { datastring["__Notes"] = value; }
-
-
-
         }
 
 
@@ -419,51 +417,46 @@ namespace UseJCR6 {
     /// </summary>
 
     class TJCRDIR {
-
         public int FAToffset;
-
         public int FATsize;
-
         public int FATcsize;
-
         public string FATstorage;
-
         public Dictionary<string, string> CFGstr = new Dictionary<string, string>();
-
         public Dictionary<string, bool> CFGbool = new Dictionary<string, bool>();
-
         public Dictionary<string, int> CFGint = new Dictionary<string, int>();
-
         public SortedDictionary<string, TJCREntry> Entries = new SortedDictionary<string, TJCREntry>();
-
         public SortedDictionary<string, string> Comments = new SortedDictionary<string, string>();
 
 
 
         /// <summary>
-
         /// Count the entries.
-
         /// </summary>
-
         /// <value>the number of entries inside this JCR6 resource.</value>
-
         public int CountEntries {
-
             get {
-
                 var ret = 0;
-
                 foreach (string str in Entries.Keys) ret++;
-
                 return ret;
-
             }
-
         }
 
 
-
+        public string[] Aliases(TJCREntry E) {
+            var ret = new List<string>();
+            foreach(TJCREntry cE in Entries.Values) {
+                if (cE != E && $"{cE.MainFile}:{cE.Offset}" == $"{E.MainFile}:{E.Offset}") ret.Add(cE.Entry);
+            }
+            ret.Sort();
+            return ret.ToArray();
+        }
+        public string[] Aliases(string ent) {
+            if (!Exists(ent)) {
+                JCR6.JERROR = $"Can't get aliases from non-existant entry: {ent}";
+                return null;
+            }
+            return Aliases(Entries[ent.ToUpper().Replace("\\", "//")]);
+        }
 
 
         /// <summary>
@@ -843,48 +836,34 @@ namespace UseJCR6 {
 
 
     class TJCRCreateStream {
-
         readonly QuickStream stream;
-
         readonly string storage;
-
         readonly string author;
-
         readonly string notes;
-
         readonly string entry;
-
         readonly MemoryStream memstream;
-
         readonly TJCRCreate parent;
-
         //public byte[] buffer;
 
-
-
-
-
         public TJCRCreateStream(TJCRCreate theparent, string theentry, string thestorage, string theauthor = "", string thenotes = "", byte Endian = QuickStream.LittleEndian) {
-
+            /*
+            if (theparent.Entries.ContainsKey(theentry.ToUpper())) {
+                System.Diagnostics.Debug.WriteLine($"DUPE ENTRY {theentry}! Making new!");
+                int i = -1;
+                do i++; while (theparent.Entries.ContainsKey($"Dupe{i}.{theentry.ToUpper()}")); theentry = $"Dupe{i}.{theentry.ToUpper()}";
+            }
+            */
             entry = theentry;
-
             storage = thestorage;
-
             author = theauthor;
-
             notes = thenotes;
-
             memstream = new MemoryStream();
-
             stream = new QuickStream(memstream, Endian);
-
             parent = theparent;
-
             parent.OpenEntries[this] = theentry;
-
         }
 
-
+        public MemoryStream GetStream => memstream;
 
         public void WriteByte(byte b) => stream.WriteByte(b);
 
@@ -898,8 +877,15 @@ namespace UseJCR6 {
 
         public void Close() {
             var rawbuff = memstream.ToArray();
+            var hash = "Unhanshed"; if (TJCRCreate.MaxHashSize==0 || TJCRCreate.MaxHashSize>rawbuff.Length) hash = qstr.md5(System.Text.Encoding.Default.GetString(rawbuff));
             var cmpbuff = JCR6.CompDrivers[storage].Compress(rawbuff);
             var astorage = storage;
+            if (2000000000 - cmpbuff.Length < parent.mystream.Size) {
+                JCR6.JERROR = $"Adding {entry} to this JCR file will exceed the limit!";
+                stream.Close();
+                parent.OpenEntries.Remove(this);
+                return;
+            }
             // TODO: "BRUTE" support entry closure
             if (storage != "Store" && rawbuff.Length <= cmpbuff.Length) { cmpbuff = rawbuff; astorage = "Store"; }
 
@@ -912,7 +898,7 @@ namespace UseJCR6 {
                 Notes = notes,
                 Storage = astorage
             };
-
+            NEntry.datastring["__MD5HASH"] = hash;
             NEntry.datastring["__JCR6FOR"] = "C#";
 
             parent.Entries[entry.ToUpper()] = NEntry;
@@ -935,10 +921,12 @@ namespace UseJCR6 {
 
     class TJCRCreate {
 
+        static public int MaxHashSize = 100000;
         public QuickStream mystream;
         public Dictionary<TJCRCreateStream, string> OpenEntries = new Dictionary<TJCRCreateStream, string>();
         public Dictionary<string, TJCREntry> Entries = new Dictionary<string, TJCREntry>();
         Dictionary<string, string> Comments = new Dictionary<string, string>();
+        
 
 
         readonly string FileTableStorage;
@@ -1011,8 +999,42 @@ namespace UseJCR6 {
             bt.Close();
         }
 
+        /// <summary>
+        /// Copies a JCR6 entry exactly the way it is into the new JCR6 resource! Very important, no repacks or anything take place, the entry will be copied the way it is. If the new JCR6 resource must run on an engine that does not support the used compression method, using this function is NOT recommended!
+        /// </summary>
+        /// <param name="OriginalJCR"></param>
+        /// <param name="OriginalEntry"></param>
+        /// <param name="TargetEntry"></param>
+        public void JCRCopy(TJCRDIR OriginalJCR,string OriginalEntry,string TargetEntry = "") {
+            JCR6.JERROR = "";
+            try {
+                if (!OriginalJCR.Exists(OriginalEntry)) { JCR6.JERROR = $"Cannot copy non-existent entry: {OriginalEntry}!"; return; }
+                var oe = OriginalJCR.Entries[OriginalEntry.ToUpper()];
+                var bi = QuickStream.ReadFile(oe.MainFile); bi.Position = oe.Offset;
+                var buf = bi.ReadBytes(oe.CompressedSize);
+                var ne = new TJCREntry();
+                // Make sure all data is there, even the less common data!
+                foreach (string k in oe.databool.Keys) ne.databool[k] = oe.databool[k];
+                foreach (string k in oe.dataint.Keys) ne.dataint[k] = oe.dataint[k];
+                foreach (string k in oe.datastring.Keys) ne.datastring[k] = oe.datastring[k];
+                if (TargetEntry != "") ne.Entry = TargetEntry;
+                ne.Offset = (int)mystream.Position;
+                mystream.WriteBytes(buf);
+                Entries[ne.Entry.ToUpper()] = ne;
+                bi.Close();
+            } catch (Exception Uitzondering) {
+                JCR6.JERROR = $".NET Exception during JCRCopy: {Uitzondering.Message}";
+            }
+        }
 
-
+        public void JCRCopy(string OJCR, string OriginalEntry, string TargetEntry = "") {
+            try {
+                JCR6.JERROR = "";
+                JCRCopy(JCR6.Dir(OJCR), OriginalEntry, TargetEntry);
+            } catch (Exception Mislukt) {
+                JCR6.JERROR = $".NET Exception during JCRCopy: {Mislukt.Message}";
+            }
+        }        
 
 
         /// <summary>
@@ -1229,8 +1251,8 @@ namespace UseJCR6 {
         static public string JERROR = "";
 
         static JCR6() {
-            MKL.Version("JCR6 - jcr6.cs", "19.03.27");
-            MKL.Lic("JCR6 - jcr6.cs", "Mozilla Public License 2.0");
+            MKL.Version("JCR6 - jcr6.cs","19.11.16");
+            MKL.Lic    ("JCR6 - jcr6.cs","Mozilla Public License 2.0");
             CompDrivers["Store"] = new TJCRCStore();
             FileDrivers["JCR6"] = new TJCR6DRIVER();
         }
@@ -1278,4 +1300,5 @@ namespace UseJCR6 {
     }
 
 }
+
 
