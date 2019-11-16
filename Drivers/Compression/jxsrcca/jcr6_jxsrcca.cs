@@ -1,7 +1,7 @@
 // Lic:
 // Drivers/Compression/jxsrcca/jcr6_jxsrcca.cs
 // Jeroen's Extremely Simplistic Repeatitive Character Compression Algorithm for C# JCR6
-// version: 19.03.27
+// version: 19.11.16
 // Copyright (C)  Jeroen P. Broks
 // This software is provided 'as-is', without any express or implied
 // warranty.  In no event will the authors be held liable for any damages
@@ -39,8 +39,8 @@ namespace UseJCR6
         /// </summary>
         public static void Init() {
             JCR6.CompDrivers["jxsrcca"] = new JCR6_jxsrcca(true);
-            MKL.Lic("JCR6 - jcr6_jxsrcca.cs", "ZLib License");
-            MKL.Version("JCR6 - jcr6_jxsrcca.cs", "19.03.27");
+            MKL.Lic    ("JCR6 - jcr6_jxsrcca.cs","ZLib License");
+            MKL.Version("JCR6 - jcr6_jxsrcca.cs","19.11.16");
         }
 
 
@@ -77,5 +77,6 @@ namespace UseJCR6
         }
     }
 }
+
 
 
