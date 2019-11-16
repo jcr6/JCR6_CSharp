@@ -1,7 +1,7 @@
 // Lic:
 // Drivers/FileTypes/JCR5.cs
 // JCR5 for JCR6 C#
-// version: 19.03.27
+// version: 19.11.16
 // Copyright (C)  Jeroen P. Broks
 // This software is provided 'as-is', without any express or implied
 // warranty.  In no event will the authors be held liable for any damages
@@ -34,7 +34,7 @@ namespace UseJCR6
         {
             if (doit)
             {
-                MKL.Version("JCR6 - JCR5.cs","19.03.27");
+                MKL.Version("JCR6 - JCR5.cs","19.11.16");
                 MKL.Lic    ("JCR6 - JCR5.cs","ZLib License");
                 JCR6.FileDrivers["JCR5"] = new JCR_JCR5();
                 JCR6.FileDrivers["JCR5"].name = "JCR5";
@@ -43,11 +43,15 @@ namespace UseJCR6
 
         override public bool Recognize(string file)
         {
-            var BT = QuickStream.ReadFile(file);
-            if (BT == null) return false;
-            var Header = BT.ReadString(5);
-            BT.Close();
-            return Header == "JCR5" + qstr.Chr(26);
+            try {
+                var BT = QuickStream.ReadFile(file);
+                if (BT == null) return false;
+                var Header = BT.ReadString(5);
+                BT.Close();
+                return Header == "JCR5" + qstr.Chr(26);
+            } catch {
+                return false;
+            }
         }
 
         void JCR_JAMERR(string e, string mf, string en, string f) { JCR6.JERROR = ($"JCR5 ERROR!\n{e}\n\nMainfile: {mf}; Entry {en};\nFunction: {f}").Replace("~q",@"\"); }
@@ -524,3 +528,4 @@ Public
 
 New drv_jcr5_for_jcr6
 */
+
