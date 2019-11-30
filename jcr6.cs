@@ -310,8 +310,8 @@ namespace UseJCR6 {
         /// Contains the true name of the entry. Also with its regular upper and lower case settings.
         /// </summary>
         public string Entry {
-            get { return datastring["__Entry"]; }
-            set { datastring["__Entry"] = value; }
+            get { while (datastring["__Entry"][0] == '/') datastring["__Entry"] = datastring["__Entry"].Substring(1);  return datastring["__Entry"]; }
+            set { datastring["__Entry"] = value; while (datastring["__Entry"][0] == '/') datastring["__Entry"] = datastring["__Entry"].Substring(1); }
         }
 
         /// <summary>
@@ -407,15 +407,10 @@ namespace UseJCR6 {
 
 
     /// <summary>
-
     /// This class is used to store all information of the directory inside the JCR6 resource.
-
     /// It also contains many handy methods to help you work with JCR6 resources.
-
     /// Although strictly speaking writing is possible, it's best to consider everything within this class as "read-only".
-
     /// </summary>
-
     class TJCRDIR {
         public int FAToffset;
         public int FATsize;
@@ -620,111 +615,59 @@ namespace UseJCR6 {
 
 
         /// <summary>
-
         /// Loads the stringmap. In most of my works this variant has been used.
-
         /// </summary>
-
         /// <returns>The string map.</returns>
-
         /// <param name="entry">Entry in JCR6 resource.</param>
-
         public Dictionary<string, string> LoadStringMap(string entry) {
-
             var bt = ReadFile(entry, QuickStream.LittleEndian);
-
             if (bt == null) return null;
-
             var ret = new Dictionary<string, string>();
-
             string k;
-
             string v;
-
             while (true) {
-
                 var tag = bt.ReadByte();
-
                 switch (tag) {
-
                     case 1:
-
                         k = bt.ReadString();
-
                         v = bt.ReadString();
-
                         ret[k] = v;
-
                         break;
-
                     case 255:
-
                         bt.Close();
-
                         return ret;
-
                     default:
-
                         bt.Close();
-
                         JCR6.JERROR = $"Invalid tag in stringmap {tag}";
-
                         return null;
-
                 }
-
             }
-
         }
 
 
-
         public SortedDictionary<string, string> LoadStringMapSorted(string entry) {
-
             var bt = ReadFile(entry, QuickStream.LittleEndian);
-
             if (bt == null) return null;
-
             var ret = new SortedDictionary<string, string>();
-
             string k;
-
             string v;
-
             while (true) {
-
                 var tag = bt.ReadByte();
-
                 switch (tag) {
-
                     case 1:
-
                         k = bt.ReadString();
-
                         v = bt.ReadString();
-
                         ret[k] = v;
-
                         break;
-
                     case 255:
-
                         bt.Close();
-
                         return ret;
-
                     default:
-
                         bt.Close();
-
                         JCR6.JERROR = $"Invalid tag in stringmap {tag}";
-
                         return null;
-
                 }
-
             }
-
         }
 
 
@@ -900,15 +843,10 @@ namespace UseJCR6 {
             };
             NEntry.datastring["__MD5HASH"] = hash;
             NEntry.datastring["__JCR6FOR"] = "C#";
-
-            parent.Entries[entry.ToUpper()] = NEntry;
-
+            parent.Entries[NEntry.Entry.ToUpper()] = NEntry;
             parent.mystream.WriteBytes(cmpbuff);
-
             parent.OpenEntries.Remove(this);
-
             stream.Close();
-
         }
 
     }
