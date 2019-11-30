@@ -1,7 +1,7 @@
 // Lic:
 // Drivers/FileTypes/a.cs
 // a support for JCR6
-// version: 19.11.16
+// version: 19.11.30
 // Copyright (C)  Jeroen P. Broks
 // This software is provided 'as-is', without any express or implied
 // warranty.  In no event will the authors be held liable for any damages
@@ -91,10 +91,11 @@ namespace UseJCR6 {
 
 
         public JCR_a() {
-            MKL.Version("JCR6 - a.cs","19.11.16");
+            MKL.Version("JCR6 - a.cs","19.11.30");
             MKL.Lic    ("JCR6 - a.cs","ZLib License");
             JCR6.FileDrivers["AR"] = this;
             JCR6.FileDrivers["AR"].name = "The Archiver";
         }
     }
 }
+
