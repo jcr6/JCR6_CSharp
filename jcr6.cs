@@ -128,6 +128,13 @@ namespace UseJCR6 {
             }
             var fatbytes = JCR6.CompDrivers[ret.FATstorage].Expand(fatcbytes, ret.FATsize);
             bt = QuickStream.StreamFromBytes(fatbytes, QuickStream.LittleEndian); // Little Endian is the default, but I need to make sure as JCR6 REQUIRES Little Endian for its directory structures.
+            if (fatbytes[fatbytes.Length - 1] != 0xff) {
+                System.Diagnostics.Debug.WriteLine("WARNING! This JCR resource is probably written with the Python Prototype of JCR6 and lacks a proper ending byte.... I'll fix that");
+                var fixfat = new byte[fatbytes.Length + 1];
+                fixfat[fixfat.Length - 1] = 255;
+                for (int i = 0; i < fatbytes.Length; i++) fixfat[i] = fatbytes[i];
+                fatbytes = fixfat;
+            }
             while ((!bt.EOF) && (!theend)) {
                 var mtag = bt.ReadByte();
                 var ppp = bt.Position;
@@ -258,8 +265,7 @@ namespace UseJCR6 {
                         }
                         break;
                     default:
-                        JCR6.JERROR = $"Unknown main tag {mtag}, at file table position ";
-                        JCR6.JERROR += bt.Position;
+                        JCR6.JERROR = $"Unknown main tag {mtag}, at file table position '{file}'::{bt.Position}/{bt.Size}";
                         bt.Close();
                         return null;
                 }
@@ -727,13 +733,9 @@ namespace UseJCR6 {
         /// <param name="endian">QuickStream.LittleEndian or QuickStream.BigEndian for automatic endian conversion, if set to 0 it will just read endians by the way the CPU does it.</param>
 
         public QuickStream ReadFile(string entry, byte endian = QuickStream.LittleEndian) {
-
             var buf = JCR_B(entry);
-
             if (buf == null) return null;
-
             return QuickStream.StreamFromBytes(buf, endian);
-
         }
 
 
@@ -749,30 +751,17 @@ namespace UseJCR6 {
         /// <param name="entry">The entry name (case insensitive)</param>
 
         public string[] ReadLines(string entry, bool unixonly = false) {
-
             var s = LoadString(entry);
-
             string[] eol = new string[3]; eol[0] = "\r\n"; eol[1] = "\n\r"; eol[2] = "\n";
-
             if (unixonly) return s.Split('\n');
-
             foreach (string eoln in eol) {
-
                 if (s.Contains(eoln)) {
-
                     var sp = new System.Text.RegularExpressions.Regex(eoln);
-
                     return sp.Split(s);
-
                 }
-
             }
-
             return new[] { s }; // if all one line, just dump it as one line!
-
         }
-
-
 
     }
 
