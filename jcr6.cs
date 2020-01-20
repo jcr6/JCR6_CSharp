@@ -6,7 +6,7 @@
 // Mozilla Public License, v. 2.0. If a copy of the MPL was not
 // distributed with this file, You can obtain one at
 // http://mozilla.org/MPL/2.0/.
-// Version: 19.11.30
+// Version: 20.01.20
 // EndLic
 
 #undef jcr6debugchat
@@ -812,6 +812,19 @@ namespace UseJCR6 {
             var hash = "Unhanshed"; if (TJCRCreate.MaxHashSize==0 || TJCRCreate.MaxHashSize>rawbuff.Length) hash = qstr.md5(System.Text.Encoding.Default.GetString(rawbuff));
             var cmpbuff = JCR6.CompDrivers[storage].Compress(rawbuff);
             var astorage = storage;
+            if (cmpbuff==null) {
+                JCR6.JERROR="Compression buffer failed to be created!";
+                stream.Close();
+                parent.OpenEntries.Remove(this);
+                return;
+            }
+            if (parent == null) {
+                JCR6.JERROR = "Parent of JCR creation stream happen to be 'null'.";
+            }
+            if (parent.mystream == null) {
+                JCR6.JERROR = "JCR creation impossible with non-existent stream";
+                return;
+            }
             if (2000000000 - cmpbuff.Length < parent.mystream.Size) {
                 JCR6.JERROR = $"Adding {entry} to this JCR file will exceed the limit!";
                 stream.Close();
@@ -1178,7 +1191,7 @@ namespace UseJCR6 {
         static public string JERROR = "";
 
         static JCR6() {
-            MKL.Version("JCR6 - jcr6.cs","19.11.30");
+            MKL.Version("JCR6 - jcr6.cs","20.01.20");
             MKL.Lic    ("JCR6 - jcr6.cs","Mozilla Public License 2.0");
             CompDrivers["Store"] = new TJCRCStore();
             FileDrivers["JCR6"] = new TJCR6DRIVER();
@@ -1227,6 +1240,3 @@ namespace UseJCR6 {
     }
 
 }
-
-
-

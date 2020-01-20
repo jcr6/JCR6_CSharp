@@ -1,7 +1,7 @@
 // Lic:
 // Drivers/Compression/zlib/zlib.cs
 // zlib driver for C# JCR6
-// version: 19.03.27
+// version: 20.01.20
 // Copyright (C)  Jeroen P. Broks
 // This software is provided 'as-is', without any express or implied
 // warranty.  In no event will the authors be held liable for any damages
@@ -24,9 +24,7 @@
 
 
 using ComponentAce.Compression.Libs.zlib;
-
 using System.IO;
-
 using System;
 
 
@@ -41,145 +39,74 @@ using TrickyUnits;
 
 
 
-namespace UseJCR6
+namespace UseJCR6 {
 
-{
-
-    class JCR6_zlib : TJCRBASECOMPDRIVER
-
-    {
+    class JCR6_zlib : TJCRBASECOMPDRIVER {
 
 
 
         public JCR6_zlib(bool nor = false) { if (!nor) Init(); }
 
         static public void Init() {
-
             //System.Console.WriteLine("DEBUG: ZLIB INIT!!!");
-
             JCR6.CompDrivers["zlib"] = new JCR6_zlib(true);
-
             MKL.Lic    ("JCR6 - zlib.cs","ZLib License");
-
-            MKL.Version("JCR6 - zlib.cs","19.03.27");
-
-
-
+            MKL.Version("JCR6 - zlib.cs","20.01.20");
         }
 
 
 
-        public static int CopyStream(System.IO.Stream input, System.IO.Stream output)
-
-        {
-
+        public static int CopyStream(System.IO.Stream input, System.IO.Stream output) {
             int total = 0;
-
             byte[] buffer = new byte[2000];
-
             int len;
-
-            while ((len = input.Read(buffer, 0, 2000)) > 0)
-
-            {
-
+            while ((len = input.Read(buffer, 0, 2000)) > 0) {
                 output.Write(buffer, 0, len);
-
                 total += len;
-
             }
-
             output.Flush();
-
             return total;
-
         }
 
 
 
 
 
-        override public byte[] Compress(byte[] inputbuffer)
-
-        {
-
-            byte[] ret = new byte[(int)Math.Ceiling(inputbuffer.Length*1.75)]; // in zlib compression you must take into account that "reduced to" 175% can be the outcome, now JCR6 will if that happens, automatically resort to "Store", but if not taken care of here, JCR6 can and will crash before it can resort to Store....
-
+        override public byte[] Compress(byte[] inputbuffer) {
+            byte[] ret = new byte[(int)Math.Ceiling(inputbuffer.Length * 1.75)]; // in zlib compression you must take into account that "reduced to" 175% can be the outcome, now JCR6 will if that happens, automatically resort to "Store", but if not taken care of here, JCR6 can and will crash before it can resort to Store....
             var outFileStream = new MemoryStream(ret);
-
             var compsize = 0;
-
             ZOutputStream outZStream = new ZOutputStream(outFileStream, zlibConst.Z_BEST_COMPRESSION);
-
             var inFileStream = new MemoryStream(inputbuffer);
-
-            try
-
-            {
-
+            try {
                 compsize = CopyStream(inFileStream, outZStream);
-
-            }
-
-            finally
-
-            {
-
+            } finally {
                 outZStream.Close();
-
                 outFileStream.Close();
-
                 inFileStream.Close();
-
             }
-
             byte[] rettruncated = new byte[compsize];
-
             Array.Copy(ret, rettruncated, compsize);
-
             return rettruncated;
-
         }
 
 
 
-        public override byte[] Expand(byte[] inputbuffer, int realsize)
-
-        {
-
+        public override byte[] Expand(byte[] inputbuffer, int realsize) {
             byte[] ret = new byte[realsize];
-
             var instr = new MemoryStream(inputbuffer);
-
             var oustr = new MemoryStream(ret);
-
             var zlstr = new ZOutputStream(oustr);
-
-            try
-
-            {
-
+            try {
                 CopyStream(instr, zlstr);
-
-            }
-
-            finally
-
-            {
-
+            } finally {
                 zlstr.Close();
-
                 oustr.Close();
-
                 instr.Close();
-
-            }        
-
+            }
             return ret;
-
         }
 
     }
 
 }
-
