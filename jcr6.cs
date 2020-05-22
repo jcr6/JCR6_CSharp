@@ -461,19 +461,33 @@ namespace UseJCR6 {
 
 
         /// <summary>
-
         /// Checks if an entry exists
-
         /// </summary>
-
         /// <remarks>Please remember that JCR6 is case INSENSITIVE!!!</remarks>
-
         /// <returns>True if the entry does exist and false otherwise</returns>
-
         /// <param name="entry">Entry.</param>
-
         public bool Exists(string entry) => Entries.ContainsKey(entry.ToUpper());
 
+        public string[] DirList {
+            get {
+                try {
+                    var l = new List<string>();
+                    foreach (string EN in Entries.Keys) {
+                        var d = qstr.ExtractDir(EN);
+                        if (!l.Contains(d)) l.Add(d);
+                        while (d.IndexOf('/') >= 0) {
+                            d = qstr.ExtractDir(d);
+                            if (!l.Contains(d)) l.Add(d);
+                        }
+                    }
+                    return l.ToArray();
+                } catch (Exception e) {
+                    //Confirm.Annoy($"{e}", ".NET Error on operation!", System.Windows.Forms.MessageBoxIcon.Error);
+                    JCR6.JERROR = e.Message;
+                    return new string[0];
+                }
+            }
+        }
 
 
         /// <summary>
@@ -768,13 +782,14 @@ namespace UseJCR6 {
 
 
     class TJCRCreateStream {
-        readonly QuickStream stream;
+        QuickStream stream;
         readonly string storage;
         readonly string author;
         readonly string notes;
         readonly string entry;
-        readonly MemoryStream memstream;
+        MemoryStream memstream;
         readonly TJCRCreate parent;
+        public bool closed { get; private set; } = false;
         //public byte[] buffer;
 
         public TJCRCreateStream(TJCRCreate theparent, string theentry, string thestorage, string theauthor = "", string thenotes = "", byte Endian = QuickStream.LittleEndian) {
@@ -807,9 +822,19 @@ namespace UseJCR6 {
 
         public void WriteBytes(byte[] b, bool ce = false) => stream.WriteBytes(b, ce);
 
+        ~TJCRCreateStream() {
+            JCR6.dCHAT($"Flusing TJCRCreateStream: {entry}/{storage}");
+            if (!closed) {
+                Console.Beep();
+                Console.WriteLine($"WARNING! Unclosed TJCRCreatestream ({entry}) is being flushed");
+                Close();
+            }
+        }
+
         public void Close() {
+            if (closed) return;
             var rawbuff = memstream.ToArray();
-            var hash = "Unhanshed"; if (TJCRCreate.MaxHashSize==0 || TJCRCreate.MaxHashSize>rawbuff.Length) hash = qstr.md5(System.Text.Encoding.Default.GetString(rawbuff));
+            var hash = "Unhashed"; if (TJCRCreate.MaxHashSize==0 || TJCRCreate.MaxHashSize>rawbuff.Length) hash = qstr.md5(System.Text.Encoding.Default.GetString(rawbuff));
             var cmpbuff = JCR6.CompDrivers[storage].Compress(rawbuff);
             var astorage = storage;
             if (cmpbuff==null) {
@@ -849,6 +874,9 @@ namespace UseJCR6 {
             parent.mystream.WriteBytes(cmpbuff);
             parent.OpenEntries.Remove(this);
             stream.Close();
+            closed = true;
+            memstream = null;
+            stream = null;
         }
 
     }
@@ -1076,27 +1104,18 @@ namespace UseJCR6 {
 
 
         public void AddString(string mystring, string Entry, string Storage = "Store", string Author = "", string Notes = "") {
-
             var s = NewEntry(Entry, Storage, Author, Notes);
-
             if (s == null) return;
-
             s.WriteString(mystring, true);
-
             s.Close();
-
         }
 
 
 
         public void AddBytes(byte[] mybuffer, string Entry, string Storage = "Store", string Author = "", string Notes = "") {
-
             var s = NewEntry(Entry, Storage, Author, Notes);
-
             s.WriteBytes(mybuffer);
-
             s.Close();
-
         }
 
 
@@ -1104,19 +1123,12 @@ namespace UseJCR6 {
 
 
         public void AddFile(string OriginalFile, string Entry, string Storage = "Store", string Author = "", string Notes = "") {
-
             var rs = QuickStream.ReadFile(OriginalFile);
-
             var buf = rs.ReadBytes((int)rs.Size);
-
             rs.Close();
-
             var ws = NewEntry(Entry, Storage, Author, Notes);
-
             ws.WriteBytes(buf);
-
             ws.Close();
-
         }
 
 
