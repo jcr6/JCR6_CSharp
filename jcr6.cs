@@ -1,12 +1,12 @@
 // Lic:
 // jcr6.cs
-// (c)  JCR6 for C#.
+// (c) 2018, 2020 JCR6 for C#.
 // 
 // This Source Code Form is subject to the terms of the
 // Mozilla Public License, v. 2.0. If a copy of the MPL was not
 // distributed with this file, You can obtain one at
 // http://mozilla.org/MPL/2.0/.
-// Version: 20.01.20
+// Version: 20.05.22
 // EndLic
 
 #undef jcr6debugchat
@@ -1203,7 +1203,7 @@ namespace UseJCR6 {
         static public string JERROR = "";
 
         static JCR6() {
-            MKL.Version("JCR6 - jcr6.cs","20.01.20");
+            MKL.Version("JCR6 - jcr6.cs","20.05.22");
             MKL.Lic    ("JCR6 - jcr6.cs","Mozilla Public License 2.0");
             CompDrivers["Store"] = new TJCRCStore();
             FileDrivers["JCR6"] = new TJCR6DRIVER();
