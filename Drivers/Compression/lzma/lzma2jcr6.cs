@@ -1,12 +1,12 @@
 // Lic:
 // Drivers/Compression/lzma/lzma2jcr6.cs
-// (c)  Jeroen P. Broks (driver only. Algorithm still belongs to Igor Pavlov) :).
+// (c) 2018, 2020 Jeroen P. Broks (driver only. Algorithm still belongs to Igor Pavlov) :).
 // 
 // This Source Code Form is subject to the terms of the
 // Mozilla Public License, v. 2.0. If a copy of the MPL was not
 // distributed with this file, You can obtain one at
 // http://mozilla.org/MPL/2.0/.
-// Version: 19.11.16
+// Version: 20.08.16
 // EndLic
 
 
@@ -21,7 +21,7 @@ namespace UseJCR6 {
             if (ret.Length!=realsize) { 
                 System.Console.WriteLine("WARNING! I expected this lzma block to be "+realsize+" byte long, but it is in fact "+ret.Length+" bytes long");
                 if (ret.Length==inputbuffer.Length) { System.Console.WriteLine("I have the feeling decompression did NOT take place somehow(?)");}
-            }
+            }            
             return ret;
         }
 
@@ -30,7 +30,7 @@ namespace UseJCR6 {
         public JCR6_lzma() { 
             JCR6.CompDrivers["lzma"] = this;
             MKL.Lic    ("JCR6 - lzma2jcr6.cs","Mozilla Public License 2.0");
-            MKL.Version("JCR6 - lzma2jcr6.cs","19.11.16");
+            MKL.Version("JCR6 - lzma2jcr6.cs","20.08.16");
         }
 
 
@@ -47,5 +47,3 @@ namespace UseJCR6 {
 
 
 }
-
-
