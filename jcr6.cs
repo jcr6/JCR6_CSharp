@@ -1169,7 +1169,7 @@ namespace UseJCR6 {
     /// <summary>
     /// The basic JCR6 class.
     /// </summary>
-    class JCR6 {
+    public class JCR6 {
         //public const bool dbg = false;
 
         // Better leave these alone all the time!
