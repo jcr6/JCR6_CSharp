@@ -28,12 +28,12 @@ namespace UseJCR6 {
     // The two abstract methods speak for itself. Compress is to make compression possible and Expand for Expansion or Decompression. 
     // The 'realsize' parameter has only been added as in my experience in earlier getups, so algorithms can require to know this prior to decompression.
 
-    abstract class TJCRBASECOMPDRIVER {
+    public abstract class TJCRBASECOMPDRIVER {
         public abstract byte[] Compress(byte[] inputbuffer);
         public abstract byte[] Expand(byte[] inputbuffer, int realsize);
     }
 
-    abstract class TJCRBASEDRIVER {
+    public abstract class TJCRBASEDRIVER {
         public string name = "???";
         public abstract bool Recognize(string file);
         public abstract TJCRDIR Dir(string file);
@@ -41,7 +41,7 @@ namespace UseJCR6 {
 
 
 
-    class TJCRCStore : TJCRBASECOMPDRIVER {
+    internal class TJCRCStore : TJCRBASECOMPDRIVER {
         public override byte[] Compress(byte[] inputbuffer) { return inputbuffer; }
         public override byte[] Expand(byte[] inputbuffer, int realsize) { return inputbuffer; }
     }
@@ -969,7 +969,7 @@ namespace UseJCR6 {
                 JCR6.ErrorReset();
                 JCRCopy(JCR6.Dir(OJCR), OriginalEntry, TargetEntry);
             } catch (Exception Mislukt) {
-                JCR6.Fail( $".NET Exception during JCRCopy: {Mislukt.Message}",, $"<OriResource> => {MainFile}", $"({OriginalEntry} => {TargetEntry}");
+                JCR6.Fail( $".NET Exception during JCRCopy: {Mislukt.Message}", $"<OriResource> => {MainFile}", $"({OriginalEntry} => {TargetEntry}");
             }
         }        
 
