@@ -6,7 +6,7 @@
 // Mozilla Public License, v. 2.0. If a copy of the MPL was not
 // distributed with this file, You can obtain one at
 // http://mozilla.org/MPL/2.0/.
-// Version: 20.08.16
+// Version: 20.09.03
 // EndLic
 
 #undef jcr6debugchat
@@ -59,6 +59,7 @@ namespace UseJCR6 {
             this.entry = entry;
             if (throwit) throw this;
         }
+
     }
 
 
@@ -267,8 +268,8 @@ namespace UseJCR6 {
                                         JCR6.JERROR = "Required JCR6 addon file (" + depcall + ") could not imported! Importer reported: " + JCR6.JERROR; //,fil,"N/A","JCR 6 Driver: Dir()")
                                         bt.Close();
                                         return null;
-                                    } else if (tag == "REQUIRE") {
-                                        JCR6.JERROR = "Required JCR6 addon file (" + depcall + ") could not found!"; //,fil,"N/A","JCR 6 Driver: Dir()")
+                                    } else if (tag == "REQUIRE" && (!File.Exists(depcall))) {
+                                        JCR6.JERROR = "Required JCR6 addon file (" + depcall + ") could not be found!"; //,fil,"N/A","JCR 6 Driver: Dir()")
                                         bt.Close();
                                         return null;
                                     }
@@ -569,7 +570,7 @@ namespace UseJCR6 {
 
         public byte[] JCR_B(string entry) {
 
-            JCR6.JERROR = ""; JCR6.JATCH=null;
+            JCR6.ErrorReset();
 
             var ce = entry.ToUpper();
 
@@ -1201,8 +1202,9 @@ namespace UseJCR6 {
         static public bool ErrorCrash = false;
 
         internal static void Fail(string Msg, string Main="N/A", string Entry = "N/A") {
-            JCATCH = new JCR6Exception(Msg, Main, Entry, ErrorCrash);
+            JCATCH = new JCR6Exception(Msg, Main, Entry, false);
             JERROR = Msg; // Deprecated but needed in order to let my other projects work
+            if (ErrorCrash) throw JCATCH;
         }
 
         internal static void ErrorReset() { JERROR = ""; JCATCH = null; }
@@ -1210,7 +1212,7 @@ namespace UseJCR6 {
         
 
         static JCR6() {
-            MKL.Version("JCR6 - jcr6.cs","20.08.16");
+            MKL.Version("JCR6 - jcr6.cs","20.09.03");
             MKL.Lic    ("JCR6 - jcr6.cs","Mozilla Public License 2.0");
             CompDrivers["Store"] = new TJCRCStore();
             FileDrivers["JCR6"] = new TJCR6DRIVER();
