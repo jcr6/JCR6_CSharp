@@ -1,8 +1,8 @@
 // Lic:
 // Drivers/FileTypes/JQL.cs
 // JQL (JCR quick link)
-// version: 20.01.20
-// Copyright (C)  Jeroen P. Broks
+// version: 20.11.10
+// Copyright (C) 2020 Jeroen P. Broks
 // This software is provided 'as-is', without any express or implied
 // warranty.  In no event will the authors be held liable for any damages
 // arising from the use of this software.
@@ -189,6 +189,9 @@ namespace UseJCR6 {
                                     ret.Comments[c.parameter] = cmt.ToString();
                                     break;
                                 }
+                            case "IMPORT":
+                                ret.PatchFile(c.parameter);
+                                break;
                             case "END":
                                 return ret;
                             default: throw new Exception($"Unknown instruction! {c.commando}");
