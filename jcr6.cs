@@ -332,8 +332,8 @@ namespace UseJCR6 {
         /// Contains the true name of the entry. Also with its regular upper and lower case settings.
         /// </summary>
         public string Entry {
-            get { while (datastring["__Entry"][0] == '/') datastring["__Entry"] = datastring["__Entry"].Substring(1);  return datastring["__Entry"]; }
-            set { value = value.Trim(); datastring["__Entry"] = value; while (datastring["__Entry"][0] == '/') datastring["__Entry"] = datastring["__Entry"].Substring(1); }
+            get { while (datastring["__Entry"] != "" && datastring["__Entry"][0] == '/') datastring["__Entry"] = datastring["__Entry"].Substring(1);  return datastring["__Entry"]; }
+            set { value = value.Trim(); datastring["__Entry"] = value; while (datastring["__Entry"]!="" && datastring["__Entry"][0] == '/') datastring["__Entry"] = datastring["__Entry"].Substring(1); }
         }
 
         /// <summary>
