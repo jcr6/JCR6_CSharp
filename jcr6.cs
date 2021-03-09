@@ -1,12 +1,12 @@
 // Lic:
 // jcr6.cs
-// (c) 2018, 2019, 2020 JCR6 for C#.
+// (c) 2018, 2019, 2020, 2021 JCR6 for C#.
 // 
 // This Source Code Form is subject to the terms of the
 // Mozilla Public License, v. 2.0. If a copy of the MPL was not
 // distributed with this file, You can obtain one at
 // http://mozilla.org/MPL/2.0/.
-// Version: 20.09.03
+// Version: 21.03.09
 // EndLic
 
 #undef jcr6debugchat
@@ -333,7 +333,7 @@ namespace UseJCR6 {
         /// </summary>
         public string Entry {
             get { while (datastring["__Entry"][0] == '/') datastring["__Entry"] = datastring["__Entry"].Substring(1);  return datastring["__Entry"]; }
-            set { datastring["__Entry"] = value; while (datastring["__Entry"][0] == '/') datastring["__Entry"] = datastring["__Entry"].Substring(1); }
+            set { value = value.Trim(); datastring["__Entry"] = value; while (datastring["__Entry"][0] == '/') datastring["__Entry"] = datastring["__Entry"].Substring(1); }
         }
 
         /// <summary>
@@ -482,7 +482,19 @@ namespace UseJCR6 {
         /// <remarks>Please remember that JCR6 is case INSENSITIVE!!!</remarks>
         /// <returns>True if the entry does exist and false otherwise</returns>
         /// <param name="entry">Entry.</param>
-        public bool Exists(string entry) => Entries.ContainsKey(entry.ToUpper());
+        public bool Exists(string entry) => Entries.ContainsKey(entry.ToUpper().Replace("\\","/"));
+
+        /// <summary>
+        /// Checks the resource for a directory! (NOTE! There is not real directory support in JCR6, it just checks if any file has the specified path name (file itself not counted)
+        /// </summary>
+        /// <param name="d"></param>
+        /// <returns></returns>
+        public bool DirExists(string d) {
+            d = d.ToUpper();
+            foreach (string k in Entries.Keys)
+                if (qstr.ExtractDir(k) == d) return true;
+            return false;
+        }
 
         public string[] DirList {
             get {
@@ -507,95 +519,52 @@ namespace UseJCR6 {
 
 
         /// <summary>
-
         /// Patches a file into a JCR6 resource, if JCR6 can recognise it as a resource.
-
         /// </summary>
-
         /// <param name="file">File.</param>
-
         public void PatchFile(string file) {
-
             JCR6.dCHAT($"Patching: {file}");
-
             var p = JCR6.Dir(file);
-
             if (p == null) {
-
                 JCR6.JERROR = ("PATCH ERROR:" + JCR6.JERROR);
-
                 return;
-
             }
-
             Patch(p);
-
         }
 
         /// <summary>
-
         /// Patches another resource into this resource.
-
         /// </summary>
-
         /// <param name="pdata">Pdata.</param>
-
         public void Patch(TJCRDIR pdata) {
-
             foreach (string k in pdata.CFGstr.Keys) { this.CFGstr[k] = pdata.CFGstr[k]; }
-
             foreach (string k in pdata.CFGint.Keys) { this.CFGint[k] = pdata.CFGint[k]; }
-
             foreach (string k in pdata.CFGbool.Keys) { this.CFGbool[k] = pdata.CFGbool[k]; }
-
             foreach (string k in pdata.Entries.Keys) { this.Entries[k] = pdata.Entries[k]; }
-
             foreach (string k in pdata.Comments.Keys) { this.Comments[k] = pdata.Comments[k]; }
-
-
-
         }
 
 
 
         /// <summary>
-
         /// Reads the content of a JCR6 resource entry.
-
         /// </summary>
-
         /// <returns>The contents of the entry in a byte array</returns>
-
         /// <param name="entry">The entry name (case insensitive)</param>
-
         public byte[] JCR_B(string entry) {
-
             JCR6.ErrorReset();
-
-            var ce = entry.ToUpper();
-
+            var ce = entry.ToUpper().Replace(@"\","/");
             if (!Entries.ContainsKey(ce)) { JCR6.JERROR = "Resource does not appear to contain an entry called: " + entry; return null; }
-
             var e = Entries[ce];
-
             byte[] cbuf;
-
             byte[] ubuf;
-
             var bt = QuickStream.ReadFile(e.MainFile);
-
             bt.Position = e.Offset;
-
             cbuf = bt.ReadBytes(e.CompressedSize);
-
             bt.Close();
-
             if (!JCR6.CompDrivers.ContainsKey(e.Storage)) { JCR6.JERROR = "Entry \"" + entry + "\" has been packed with the unsupported \"" + e.Storage + "\" algorithm"; return null; }
-
             ubuf = JCR6.CompDrivers[e.Storage].Expand(cbuf, e.Size);
-
             return ubuf;
-
         }
 
 
@@ -836,6 +805,7 @@ namespace UseJCR6 {
                 Notes = notes,
                 Storage = astorage
             };
+            parent.LastAddedEntry = NEntry;
             NEntry.datastring["__MD5HASH"] = hash;
             NEntry.datastring["__JCR6FOR"] = "C#";
             parent.Entries[NEntry.Entry.ToUpper()] = NEntry;
@@ -862,6 +832,7 @@ namespace UseJCR6 {
         public Dictionary<TJCRCreateStream, string> OpenEntries = new Dictionary<TJCRCreateStream, string>();
         public Dictionary<string, TJCREntry> Entries = new Dictionary<string, TJCREntry>();
         Dictionary<string, string> Comments = new Dictionary<string, string>();
+        public TJCREntry LastAddedEntry = null;
         
 
 
@@ -1098,7 +1069,7 @@ namespace UseJCR6 {
         public void AddBytes(byte[] mybuffer, string Entry, string Storage = "Store", string Author = "", string Notes = "") {
             var s = NewEntry(Entry, Storage, Author, Notes);
             if (s == null) return;
-            s.WriteBytes(mybuffer);
+            if (mybuffer!=null) s.WriteBytes(mybuffer);
             s.Close();
         }
 
@@ -1212,7 +1183,7 @@ namespace UseJCR6 {
         
 
         static JCR6() {
-            MKL.Version("JCR6 - jcr6.cs","20.09.03");
+            MKL.Version("JCR6 - jcr6.cs","21.03.09");
             MKL.Lic    ("JCR6 - jcr6.cs","Mozilla Public License 2.0");
             CompDrivers["Store"] = new TJCRCStore();
             FileDrivers["JCR6"] = new TJCR6DRIVER();
