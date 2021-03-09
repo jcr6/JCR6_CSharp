@@ -1,8 +1,8 @@
 // Lic:
 // Drivers/Compression/zlib/zlib.cs
 // zlib driver for C# JCR6
-// version: 20.01.20
-// Copyright (C)  Jeroen P. Broks
+// version: 21.03.09
+// Copyright (C) 2018, 2021 Jeroen P. Broks
 // This software is provided 'as-is', without any express or implied
 // warranty.  In no event will the authors be held liable for any damages
 // arising from the use of this software.
@@ -51,7 +51,7 @@ namespace UseJCR6 {
             //System.Console.WriteLine("DEBUG: ZLIB INIT!!!");
             JCR6.CompDrivers["zlib"] = new JCR6_zlib(true);
             MKL.Lic    ("JCR6 - zlib.cs","ZLib License");
-            MKL.Version("JCR6 - zlib.cs","20.01.20");
+            MKL.Version("JCR6 - zlib.cs","21.03.09");
         }
 
 
@@ -68,31 +68,61 @@ namespace UseJCR6 {
             return total;
         }
 
-
+        private static void CompressData(byte[] inData, out byte[] outData) {
+            using (MemoryStream outMemoryStream = new MemoryStream())
+            using (ZOutputStream outZStream = new ZOutputStream(outMemoryStream, zlibConst.Z_DEFAULT_COMPRESSION))
+            using (Stream inMemoryStream = new MemoryStream(inData)) {
+                CopyStream(inMemoryStream, outZStream);
+                outZStream.finish();
+                outData = outMemoryStream.ToArray();
+            }
+        }
 
 
 
         override public byte[] Compress(byte[] inputbuffer) {
+            /*
             byte[] ret = new byte[(int)Math.Ceiling(inputbuffer.Length * 1.75)]; // in zlib compression you must take into account that "reduced to" 175% can be the outcome, now JCR6 will if that happens, automatically resort to "Store", but if not taken care of here, JCR6 can and will crash before it can resort to Store....
             var outFileStream = new MemoryStream(ret);
             var compsize = 0;
             ZOutputStream outZStream = new ZOutputStream(outFileStream, zlibConst.Z_BEST_COMPRESSION);
             var inFileStream = new MemoryStream(inputbuffer);
             try {
+                //Console.WriteLine($"\nPre: OutFileStream.Length {outFileStream.Length}");
                 compsize = CopyStream(inFileStream, outZStream);
+                //Console.WriteLine($"Pst: OutFileStream.Length {outFileStream.Length}");
+                
+                int test = ret.Length-1; while (test > -1 && ret[test] > 0) test--; Console.WriteLine($"\nTest<{test}>");
             } finally {
                 outZStream.Close();
                 outFileStream.Close();
                 inFileStream.Close();
             }
-            byte[] rettruncated = new byte[compsize];
-            Array.Copy(ret, rettruncated, compsize);
+            byte[] rettruncated = outFileStream.ToArray(); //new byte[compsize];
+            //Array.Copy(ret, rettruncated, compsize);
+#if DEBUG
+            Console.WriteLine($"\nzlib.... input<{inputbuffer.Length} bytes>; Reserve<{(int)Math.Ceiling(inputbuffer.Length * 1.75)} bytes>; compsize<{compsize} bytes>; rettrunc<{rettruncated.Length} bytes>; ret<{ret.Length} bytes>"); 
+#endif
             return rettruncated;
+            */
+            byte[] ret;
+            CompressData(inputbuffer, out ret);
+            return ret;
+        }
+
+        private static void DecompressData(byte[] inData, out byte[] outData) {
+            using (MemoryStream outMemoryStream = new MemoryStream())
+            using (ZOutputStream outZStream = new ZOutputStream(outMemoryStream))
+            using (Stream inMemoryStream = new MemoryStream(inData)) {
+                CopyStream(inMemoryStream, outZStream);
+                outZStream.finish();
+                outData = outMemoryStream.ToArray();
+            }
         }
 
 
-
         public override byte[] Expand(byte[] inputbuffer, int realsize) {
+            /*
             byte[] ret = new byte[realsize];
             var instr = new MemoryStream(inputbuffer);
             var oustr = new MemoryStream(ret);
@@ -104,6 +134,9 @@ namespace UseJCR6 {
                 oustr.Close();
                 instr.Close();
             }
+            */
+            byte[] ret;
+            DecompressData(inputbuffer, out ret);
             return ret;
         }
 
