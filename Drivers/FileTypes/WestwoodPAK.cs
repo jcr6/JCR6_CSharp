@@ -133,7 +133,7 @@ namespace UseJCR6 {
 
             // No to convert all collected data to data JCR6 can understand
             var Dir = new TJCRDIR();
-            foreach(var WE in EntArray) {
+            foreach(var WE in EntArray) {                
                 var E = new TJCREntry();
                 E.Entry = WE.FileName.ToString();
                 E.Size = (int)WE.size; if (E.Size<0) { Error("Invalid size data. This Westwood file may have gone beyond the limitations of JCR6"); return; } // The error is given the fact that this is a DOS format not likely to happen, but technically possible, so we must be prepared.
@@ -143,7 +143,8 @@ namespace UseJCR6 {
                 E.MainFile = file;
                 E.Storage = "Store"; // The only format PAK supports anyway, so that's easy.
                 E.CompressedSize = E.Size;
-                Dir.Entries[E.Entry.ToUpper()] = E;
+                if (E.Entry != "")
+                    Dir.Entries[E.Entry.ToUpper()] = E;
             }
             LastScanned = file;
             LastScannedDir = Dir;
