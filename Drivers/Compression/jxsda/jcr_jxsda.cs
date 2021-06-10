@@ -22,25 +22,25 @@ using TrickyUnits;
 
 namespace UseJCR6 {
 
-    class JCR6_JXSDA : TJCRBASECOMPDRIVER {
+	class JCR6_JXSDA : TJCRBASECOMPDRIVER {
 
-        public JCR6_JXSDA(bool nor = false) { if (!nor) Init(); }
+		public JCR6_JXSDA(bool nor = false) { if (!nor) Init(); }
 
-        static public void Init() {
-            //System.Console.WriteLine("DEBUG: ZLIB INIT!!!");
-            JCR6.CompDrivers["jxsda"] = new JCR6_JXSDA(true);
-            MKL.Lic    ("JCR6 - jcr_jxsda.cs","ZLib License");
-            MKL.Version("JCR6 - jcr_jxsda.cs","21.03.09");
-            //JXSDA.Verbose = true;
-        }
+		static public void Init() {
+			//System.Console.WriteLine("DEBUG: ZLIB INIT!!!");
+			JCR6.CompDrivers["jxsda"] = new JCR6_JXSDA(true);
+			MKL.Lic    ("JCR6 - jcr_jxsda.cs","ZLib License");
+			MKL.Version("JCR6 - jcr_jxsda.cs","21.03.09");
+			//JXSDA.Verbose = true;
+		}
 
-        public override byte[] Compress(byte[] inputbuffer) => JXSDA.Pack(inputbuffer);
+		public override byte[] Compress(byte[] inputbuffer) => JXSDA.Pack(inputbuffer);
 
-        public override byte[] Expand(byte[] inputbuffer, int realsize) {
-            var ret = JXSDA.Unpack(inputbuffer);
-            if (ret==null) { new JCR6Exception("Error in JXSDA unpacking"); }
-            return ret;
-        }
+		public override byte[] Expand(byte[] inputbuffer, int realsize) {
+			var ret = JXSDA.Unpack(inputbuffer);
+			if (ret==null) { new JCR6Exception("Error in JXSDA unpacking"); }
+			return ret;
+		}
 
-    }
+	}
 }
