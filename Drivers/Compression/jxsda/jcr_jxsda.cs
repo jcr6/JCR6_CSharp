@@ -1,7 +1,7 @@
 // Lic:
 // Drivers/Compression/jxsda/jcr_jxsda.cs
 // jxsda driver for JCR6
-// version: 21.03.09
+// version: 21.07.05
 // Copyright (C) 2020, 2021 Jeroen P. Broks
 // This software is provided 'as-is', without any express or implied
 // warranty.  In no event will the authors be held liable for any damages
@@ -30,7 +30,7 @@ namespace UseJCR6 {
 			//System.Console.WriteLine("DEBUG: ZLIB INIT!!!");
 			JCR6.CompDrivers["jxsda"] = new JCR6_JXSDA(true);
 			MKL.Lic    ("JCR6 - jcr_jxsda.cs","ZLib License");
-			MKL.Version("JCR6 - jcr_jxsda.cs","21.03.09");
+			MKL.Version("JCR6 - jcr_jxsda.cs","21.07.05");
 			//JXSDA.Verbose = true;
 		}
 
