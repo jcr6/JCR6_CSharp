@@ -596,6 +596,7 @@ namespace UseJCR6 {
 			foreach (string k in pdata.CFGbool.Keys) { this.CFGbool[k] = pdata.CFGbool[k]; }
 			foreach (string k in pdata.Entries.Keys) { this.Entries[k] = pdata.Entries[k]; }
 			foreach (string k in pdata.Comments.Keys) { this.Comments[k] = pdata.Comments[k]; }
+			foreach (string k in pdata.Blocks.Keys) { this.Blocks[k] = pdata.Blocks[k]; }
 		}
 
 
@@ -638,7 +639,7 @@ namespace UseJCR6 {
 		public void FlushBlock() {
 			LastBlock = null;
 			LastBlockBuff = null;
-        }
+		}
 
 
 
@@ -945,6 +946,8 @@ namespace UseJCR6 {
 		public string Storage => datastring["__Storage"];
 		public int Size => dataint["__Size"];
 		public int CompressedSize => dataint["__CSize"];
+
+		public int Ratio => (int)Math.Floor(((double)CompressedSize / Size) * 100);
 
 		public TJCRCreateBlock(TJCRCreate _parent,string aStorage="Store") {
 			JCR6.ErrorReset();
@@ -1494,6 +1497,7 @@ namespace UseJCR6 {
 		/// <returns>The directory class.</returns>
 		/// <param name="file">The file holding the JCR6 resource (or the directory in case of a real-dir, *if* the dirver is loaded that is).</param>
 		static public TJCRDIR Dir(string file) {
+			file = file.Replace("\\", "/");
 			ErrorReset();
 			var t = Recognize(file);
 			if (t == "NONE") {
