@@ -1122,6 +1122,8 @@ namespace UseJCR6 {
 			return new TJCRCreateStream(this, Entry, Storage, Author, Notes, Endian);
 		}
 
+		public TJCRCreateStream NewEntry(string Entry, string Storage = "Store", string Author = "", string Notes = "", byte Endian = QuickStream.LittleEndian) => nb(Entry, Storage, Author, Notes, Endian);
+
 
 
 		/// <summary>
