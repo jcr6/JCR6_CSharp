@@ -15,6 +15,7 @@ using TrickyUnits;
 using System.Collections.Generic;
 using System;
 using System.IO;
+using System.Text;
 
 
 // required TrickyUnits:
@@ -599,6 +600,18 @@ namespace UseJCR6 {
 			foreach (string k in pdata.Blocks.Keys) { this.Blocks[k] = pdata.Blocks[k]; }
 		}
 
+		/// <summary>This overload is dangerous. Only use it when you know what you are doing.</summary>
+		public void Patch(TJCRDIR pdata,string AsDir) {
+			AsDir = AsDir.ToUpper();
+			foreach (string k in pdata.CFGstr.Keys) { this.CFGstr[k] = pdata.CFGstr[k]; }
+			foreach (string k in pdata.CFGint.Keys) { this.CFGint[k] = pdata.CFGint[k]; }
+			foreach (string k in pdata.CFGbool.Keys) { this.CFGbool[k] = pdata.CFGbool[k]; }
+			foreach (string k in pdata.Entries.Keys) { this.Entries[$"{AsDir}/{k}"] = pdata.Entries[k]; pdata.Entries[k].Entry = $"{AsDir}/{k}"; }
+			foreach (string k in pdata.Comments.Keys) { this.Comments[k] = pdata.Comments[k]; }
+			foreach (string k in pdata.Blocks.Keys) { this.Blocks[k] = pdata.Blocks[k]; }
+		}
+
+
 
 
 		/// <summary>
@@ -853,6 +866,16 @@ namespace UseJCR6 {
 		public void WriteLong(long i) => stream.WriteLong(i);
 
 		public void WriteBytes(byte[] b, bool ce = false) => stream.WriteBytes(b, ce);
+
+		public string BufAsString{
+			get {
+				var p = stream.Position;
+				var b = stream.ReadBytes((int)stream.Size);
+				var r = JCR6.BufAsString(b);
+				stream.Position = p;
+				return r;
+			}
+		}
 
 		~TJCRCreateStream() {
 			JCR6.dCHAT($"Flusing TJCRCreateStream: {entry}/{storage}");
@@ -1429,6 +1452,66 @@ namespace UseJCR6 {
 		public static Dictionary<string, TJCRBASECOMPDRIVER> CompDrivers = new Dictionary<string, TJCRBASECOMPDRIVER>();
 		public static Dictionary<string, TJCRBASEDRIVER> FileDrivers = new Dictionary<string, TJCRBASEDRIVER>();
 
+		public static string BufAsString(byte[] buf, bool safe = true) {
+			var ret = new StringBuilder("");
+			if (safe) for (int i = 0; i < buf.Length; i++) {
+					switch (buf[i]) {
+						case 0:
+							ret.Append("<NUL>");
+							break;
+						case 1:
+						case 2:
+						case 3:
+						case 4:
+						case 5:
+						case 6:
+						case 11:
+						case 14:
+						case 15:
+						case 16:
+						case 17:
+						case 18:
+						case 19:
+						case 20:
+						case 21:
+						case 22:
+						case 23:
+						case 24:
+						case 25:
+						case 28:
+						case 29:
+						case 30:
+						case 31:
+							ret.Append($"<{ (int)buf[i]}>"); break;
+						case 7:
+							ret.Append("<BEL>"); break;
+						case 8:
+							ret.Append("<BACK>"); break;
+							break;
+						case 9:
+							ret.Append("<TAB>"); break;
+						case 10:
+							ret.Append("<LF>"); break;
+						case 12:
+							ret.Append("<CLS>"); break;
+						case 13:
+							ret.Append("<CR>"); break;
+						case 26:
+							ret.Append("<EOF>"); break;
+						case 27:
+							ret.Append("<ESCAPE>"); break;
+						default:
+							//uEndianCheckUp x;
+							//x.ec_char = buf[i];
+							//ret += "<" + to_string(x.ec_byte) + ">";
+							ret.Append($"<{(int)buf[i]}>");
+							break;
+					}
+				}
+			else for (int i = 0; i < buf.Length && buf[i] > 0; i++) ret.Append(buf[i]);
+			return ret.ToString();
+		}
+		public static string BufAsString(List<byte> buf) => BufAsString(buf.ToArray());
 
 
 		public static void dCHAT(string s) {
