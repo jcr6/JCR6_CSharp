@@ -1185,6 +1185,10 @@ namespace UseJCR6 {
 		/// <param name="Notes">Notes.</param>
 		public void NewStringMap(SortedDictionary<string, string> data, string Entry, string Storage = "Store", string Author = "", string Notes = "") {
 			var bt = nb(Entry, Storage, Author, Notes, QuickStream.LittleEndian);
+			if (bt == null) {
+				JCR6.Fail($"Null created for a new stringmap entry.", MainFile, Entry);
+				return;
+			}
 			foreach (string k in data.Keys) {
 				bt.WriteByte(1);
 				bt.WriteString(k);
@@ -1415,6 +1419,7 @@ namespace UseJCR6 {
 			if (!JCR6.CompDrivers.ContainsKey(FTStorage)) { JCR6.Fail($"Storage method {FTStorage} not present!", OutputFile, "N/A"); return; }
 			try {
 				mystream = QuickStream.WriteFile(OutputFile, QuickStream.LittleEndian);
+				if (mystream == null) JCR6.Fail($"{OutputFile} could not be created!", OutputFile);
 				FileTableStorage = FTStorage;
 				mystream.WriteString("JCR6" + (char)26, true);
 				ftoffint = (int)mystream.Position;
