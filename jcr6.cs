@@ -1305,8 +1305,8 @@ namespace UseJCR6 {
 			CloseAllEntries();
 			if (JCR6.JCATCH != null) return; // Clearly something failed here!
 			try {
-				var whereami = mystream.Position;
 				if (mystream != null) {
+					var whereami = mystream.Position;
 					mystream.Position = ftoffint;
 					mystream.WriteInt((int)whereami);
 					mystream.Position = whereami;
