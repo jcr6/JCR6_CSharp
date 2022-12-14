@@ -1359,6 +1359,9 @@ namespace UseJCR6 {
 					mystream.WriteInt(packed.Length);
 					mystream.WriteString(fts);
 					mystream.WriteBytes(packed);
+					mystream.WriteInt((int)mystream.Size);
+					mystream.Write((byte)32);
+					mystream.WriteString("JCR6", true);
 					mystream.Close();
 				}
 				closed = true;
