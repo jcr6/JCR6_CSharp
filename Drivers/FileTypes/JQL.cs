@@ -1,8 +1,8 @@
 // Lic:
 // Drivers/FileTypes/JQL.cs
 // JQL (JCR quick link)
-// version: 20.11.10
-// Copyright (C) 2020 Jeroen P. Broks
+// version: 23.01.10
+// Copyright (C) 2020, 2023 Jeroen P. Broks
 // This software is provided 'as-is', without any express or implied
 // warranty.  In no event will the authors be held liable for any damages
 // arising from the use of this software.
@@ -19,6 +19,7 @@
 // EndLic
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using TrickyUnits;
@@ -79,6 +80,8 @@ namespace UseJCR6 {
 
 		public override TJCRDIR Dir(string file) {
 			QuickStream BT = null;
+			var MapFrom = new Dictionary<string, TJCRDIR>();
+			TJCRDIR From = null;
 			try {
 				BT = QuickStream.ReadFile(file);
 				var ret = new TJCRDIR();
@@ -204,6 +207,42 @@ namespace UseJCR6 {
 							case "IMPORT":
 								ret.PatchFile(c.parameter);
 								break;
+							case "FROM": {
+									var P = c.parameter.ToUpper();
+									if (MapFrom.ContainsKey(P)) {
+										From = MapFrom[P];
+									} else {
+										var F = JCR6.Dir(P);
+										if (F == null) throw new Exception(JCR6.JERROR);
+										From = F;
+										MapFrom[P] = F;
+									}
+								}
+								break;
+							case "STEAL": {
+									if (From == null) throw new Exception("STEAL cannot be used without FROM");
+									var p = c.parameter.IndexOf('>');
+									var rw = c.parameter.Replace("\\", "/");
+									var tg = rw;
+									if (p >= 0) {
+										rw = c.parameter.Substring(0, p).Trim().Replace("\\", "/");
+										tg = c.parameter.Substring(p + 1).Trim().Replace("\\", "/");
+									}
+									if (tg.Length > 1 && tg[1] == ':') tg = tg.Substring(2);
+									while (tg[1] == '/') tg = tg.Substring(1);
+									if (rw == "") throw new Exception("STEAL no original");
+									if (tg == "") throw new Exception("STEAL no target");
+									if (!From.Exists(rw)) throw new Exception($"Cannot steal a non-existent entry ({rw})");
+									var ei = From.Entries[rw.ToUpper()];
+									var eo = new TJCREntry();
+									foreach (var dat in ei.databool) eo.databool[dat.Key] = dat.Value;
+									foreach (var dat in ei.dataint) eo.dataint[dat.Key] = dat.Value;
+									foreach (var dat in ei.datastring) eo.datastring[dat.Key] = dat.Value;
+									eo.MainFile = ei.MainFile;
+									eo.Entry = tg;
+									ret.Entries[tg.ToUpper()] = eo;
+								}
+								break;
 							case "END":
 								return ret;
 							default: throw new Exception($"Unknown instruction! {c.commando}");
@@ -223,6 +262,7 @@ namespace UseJCR6 {
 		}
 
 		public JCR_QuickLink() {
+			name = "JCR Quick Link";
 			JCR6.FileDrivers["JCR6 Quick Link"] = this;
 		}
 	}
