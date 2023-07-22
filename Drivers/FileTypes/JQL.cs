@@ -1,7 +1,7 @@
 // Lic:
 // Drivers/FileTypes/JQL.cs
 // JQL (JCR quick link)
-// version: 23.01.10
+// version: 23.07.22
 // Copyright (C) 2020, 2023 Jeroen P. Broks
 // This software is provided 'as-is', without any express or implied
 // warranty.  In no event will the authors be held liable for any damages
@@ -164,7 +164,42 @@ namespace UseJCR6 {
 									ret.Entries[tg.ToUpper()] = e;
 									break;
 								}
-							case "TEXT":
+							case "RAWDIR":  {
+                                    var p = c.parameter.IndexOf('>');
+                                    string ds= "" , dt= "" ;
+                                    if (p < 0)
+                                        ds = c.parameter;
+                                    else {
+										ds = c.parameter.Substring(0,p).Trim().Replace('\\', '/'); ;
+										dt = c.parameter.Substring(p + 1).Trim().Replace('\\', '/') + "/";
+                                    }
+                                    if (Directory.Exists(ds)) {
+                                        var ptree = FileList.GetTree(ds);
+                                        foreach (var f in ptree) {
+											string rw = ds + "/" + f;
+											if (JCR6.Recognize(rw) != "NONE") {
+												var ijcr = JCR6.Dir(rw);
+												foreach(var eij in ijcr.Entries) {
+													eij.Value.Entry=dt+"/"+f+"/"+eij.Value.Entry;
+													ret.Entries[eij.Value.Entry.ToUpper()] = eij.Value;
+                                                }
+												//throw new Exception("Including JCR6 files found in raw dirs not yet supported");
+											} else {
+												var e = new TJCREntry();
+												e.Entry = dt + "/" + f; //e.Entry = tg;
+												e.MainFile = rw;
+												e.Storage = "Store";
+												e.Offset = 0;
+												e.Size = (int)new FileInfo(rw).Length;
+												e.CompressedSize = e.Size;
+												e.Notes = notes;
+												e.Author = author;
+												ret.Entries[e.Entry.ToUpper()] = e;
+											}
+                                        }
+                                    } else if (!optional) throw new Exception("Required raw Directory '" + ds + "' not found");
+                                } break;
+                            case "TEXT":
 							case "TXT": {
 									var tg = c.parameter.Trim().Replace("\\", "/");
 									if (tg.Length > 1 && tg[1] == ':') tg = tg.Substring(2);
