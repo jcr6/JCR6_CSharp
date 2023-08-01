@@ -20,6 +20,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using TrickyUnits;
@@ -27,7 +28,55 @@ using TrickyUnits;
 
 namespace UseJCR6 {
 
-	
+	class JCR_SuperQuickLink : TJCRBASEDRIVER {
+        override public bool Recognize(string file) {
+            if (!File.Exists(file)) return false;
+            return (qstr.Left(QuickStream.LoadString(file).ToUpper(), 5) == "JSQL:");
+        }
+
+        override public TJCRDIR Dir(string file) {
+			var content = QuickStream.LoadString(file);
+			var lfile = qstr.Right(content, content.Length - 5).Trim();
+			Debug.WriteLine("Super Quick Link: ", lfile);
+			if (Directory.Exists(lfile)) {
+				var ret = new TJCRDIR();
+				var d = FileList.GetTree(lfile);
+				foreach(var f in d) {
+                    var e = new TJCREntry();
+                    e.MainFile = lfile+"/"+f;
+                    e.Entry = qstr.StripDir(f);
+                    e.Storage = "Store";
+                    e.Size = (int)QuickStream.FileSize(e.MainFile);
+                    e.CompressedSize = e.Size;
+                    e.Notes = "Linked to by: " + file;
+                    ret.Entries[e.Entry.ToUpper()] = e;
+                }
+                return ret;
+			} 
+			if (JCR6.Recognize(lfile) == "NONE") {
+                Debug.WriteLine("Not recognized so a quick import for: ", lfile);
+                //fpath = fpath.Replace('\\', '/');
+                //if (!qstr.Suffixed(fpath, "/")) fpath += "/";
+                var ret = new TJCRDIR();				
+				var e = new TJCREntry();
+				e.Entry =  qstr.StripDir(file);
+                e.MainFile = lfile;
+				e.Storage = "Store";
+				e.Size = (int)QuickStream.FileSize(lfile);
+				e.CompressedSize = e.Size;
+				e.Notes = "Linked to by: " + file;
+                ret.Entries[e.Entry.ToUpper()] = e;
+                return ret;
+            }
+            return JCR6.Dir(file);
+        }
+
+		public JCR_SuperQuickLink() {
+            name = "JCR Super Quick Link";
+            JCR6.FileDrivers["JCR6 Super Quick Link"] = this;
+        }
+    }
+
 	class JCR_QuickLink:TJCRBASEDRIVER {
 		
 		struct QP {
@@ -299,6 +348,7 @@ namespace UseJCR6 {
 		public JCR_QuickLink() {
 			name = "JCR Quick Link";
 			JCR6.FileDrivers["JCR6 Quick Link"] = this;
+			new JCR_SuperQuickLink();
 		}
 	}
 	
