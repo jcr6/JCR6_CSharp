@@ -1059,10 +1059,12 @@ namespace UseJCR6 {
 			s.WriteString(mystring, true);
 			s.Close();
 		}
+		public void AddString(StringBuilder mystring, string Entry, string Author = "", string Notes = "") => AddString(mystring.ToString(), Entry, Author, Notes);
 
 
 
-		public void AddBytes(byte[] mybuffer, string Entry,  string Author = "", string Notes = "") {
+
+        public void AddBytes(byte[] mybuffer, string Entry,  string Author = "", string Notes = "") {
 			var s = nb(Entry, Author, Notes);
 			if (s == null) return;
 			if (mybuffer != null) s.WriteBytes(mybuffer);
@@ -1374,10 +1376,15 @@ namespace UseJCR6 {
 
 		public void AddString(string mystring, string Entry, string Storage = "Store", string Author = "", string Notes = "") {
 			var s = nb(Entry, Storage, Author, Notes);
-			if (s == null) return;
+			if (s == null) {
+				JCR6.Fail($"<CREATE:{MainFile}>.AddString(<string>,\"{Entry}\",\"{Storage}\",\"{Author}\",\"{Notes}\"): Creating stream failed. ({JCR6.JCATCH.Message})");
+				return;
+			}
 			s.WriteString(mystring, true);
 			s.Close();
 		}
+
+		public void AddString(StringBuilder mystring, string Entry, string Storage = "Store", string Author = "", string Notes = "") => AddString(mystring.ToString(), Entry, Storage, Author, Notes);
 
 
 

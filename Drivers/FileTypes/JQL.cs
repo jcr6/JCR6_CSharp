@@ -28,20 +28,20 @@ using TrickyUnits;
 
 namespace UseJCR6 {
 
-	class JCR_SuperQuickLink : TJCRBASEDRIVER {
+    class JCR_SuperQuickLink : TJCRBASEDRIVER {
         override public bool Recognize(string file) {
             if (!File.Exists(file)) return false;
             return (qstr.Left(QuickStream.LoadString(file).ToUpper(), 5) == "JSQL:");
         }
 
         override public TJCRDIR Dir(string file) {
-			var content = QuickStream.LoadString(file);
-			var lfile = qstr.Right(content, content.Length - 5).Trim();
-			Debug.WriteLine("Super Quick Link: ", lfile);
-			if (Directory.Exists(lfile)) {
-				var ret = new TJCRDIR();
-				var d = FileList.GetTree(lfile);
-				foreach(var f in d) {
+            var content = QuickStream.LoadString(file);
+            var lfile = qstr.Right(content, content.Length - 5).Trim();
+            Debug.WriteLine("Super Quick Link: ", lfile);
+            if (Directory.Exists(lfile)) {
+                var ret = new TJCRDIR();
+                var d = FileList.GetTree(lfile);
+                foreach(var f in d) {
                     var e = new TJCREntry();
                     e.MainFile = lfile+"/"+f;
                     e.Entry = qstr.StripDir(f);
@@ -52,304 +52,304 @@ namespace UseJCR6 {
                     ret.Entries[e.Entry.ToUpper()] = e;
                 }
                 return ret;
-			} 
-			if (JCR6.Recognize(lfile) == "NONE") {
+            } 
+            if (JCR6.Recognize(lfile) == "NONE") {
                 Debug.WriteLine("Not recognized so a quick import for: ", lfile);
                 //fpath = fpath.Replace('\\', '/');
                 //if (!qstr.Suffixed(fpath, "/")) fpath += "/";
                 var ret = new TJCRDIR();				
-				var e = new TJCREntry();
-				e.Entry =  qstr.StripDir(file);
+                var e = new TJCREntry();
+                e.Entry =  qstr.StripDir(file);
                 e.MainFile = lfile;
-				e.Storage = "Store";
-				e.Size = (int)QuickStream.FileSize(lfile);
-				e.CompressedSize = e.Size;
-				e.Notes = "Linked to by: " + file;
+                e.Storage = "Store";
+                e.Size = (int)QuickStream.FileSize(lfile);
+                e.CompressedSize = e.Size;
+                e.Notes = "Linked to by: " + file;
                 ret.Entries[e.Entry.ToUpper()] = e;
                 return ret;
             }
             return JCR6.Dir(file);
         }
 
-		public JCR_SuperQuickLink() {
+        public JCR_SuperQuickLink() {
             name = "JCR Super Quick Link";
             JCR6.FileDrivers["JCR6 Super Quick Link"] = this;
         }
     }
 
-	class JCR_QuickLink:TJCRBASEDRIVER {
-		
-		struct QP {
-			public string commando;
-			public string parameter;
-			public QP(string p) {
-				var i = p.IndexOf(':');
-				if (i<0) {
-					commando = p.ToUpper();
-					parameter = "";
-				} else {
-					commando = p.Substring(0, i).ToUpper();
-					parameter = p.Substring(i + 1);
-				}
-			}
-		}
+    class JCR_QuickLink:TJCRBASEDRIVER {
+        
+        struct QP {
+            public string commando;
+            public string parameter;
+            public QP(string p) {
+                var i = p.IndexOf(':');
+                if (i<0) {
+                    commando = p.ToUpper();
+                    parameter = "";
+                } else {
+                    commando = p.Substring(0, i).ToUpper();
+                    parameter = p.Substring(i + 1);
+                }
+            }
+        }
 
-		string RL(QuickStream BT,bool trim=true) {
-			var r = new StringBuilder();
-			byte b = 0;
-			while (true) {
-				if (BT.EOF) break;
-				b = BT.ReadByte();
-				if (b == 10) break;
-				if (b != 13) r.Append((char)b);
-			}
-			if (trim) return r.ToString().Trim();
-			return r.ToString();
-		}
+        string RL(QuickStream BT,bool trim=true) {
+            var r = new StringBuilder();
+            byte b = 0;
+            while (true) {
+                if (BT.EOF) break;
+                b = BT.ReadByte();
+                if (b == 10) break;
+                if (b != 13) r.Append((char)b);
+            }
+            if (trim) return r.ToString().Trim();
+            return r.ToString();
+        }
 
-		QP RQP(QuickStream BT) => new QP(RL(BT));
+        QP RQP(QuickStream BT) => new QP(RL(BT));
 
-		public override bool Recognize(string file) {
-			QuickStream BT=null;
-			try {
-				//Console.WriteLine($"JQL Recognize {File.Exists(file)}");
-				if (!File.Exists(file)) return false;
-				BT = QuickStream.ReadFile(file);
-				string s;
-				do {
-					s = RL(BT);
-					//Console.WriteLine($"_{s}_");
-					if (s != "" && (!qstr.Prefixed(s, "#"))) return s == "JQL";
-				} while (!BT.EOF);
-				return false;
-			} finally {
-				if (BT!=null) BT.Close();
-			}
-		}
+        public override bool Recognize(string file) {
+            QuickStream BT=null;
+            try {
+                //Console.WriteLine($"JQL Recognize {File.Exists(file)}");
+                if (!File.Exists(file)) return false;
+                BT = QuickStream.ReadFile(file);
+                string s;
+                do {
+                    s = RL(BT);
+                    //Console.WriteLine($"_{s}_");
+                    if (s != "" && (!qstr.Prefixed(s, "#"))) return s == "JQL";
+                } while (!BT.EOF);
+                return false;
+            } finally {
+                if (BT!=null) BT.Close();
+            }
+        }
 
-		public override TJCRDIR Dir(string file) {
-			QuickStream BT = null;
-			var MapFrom = new Dictionary<string, TJCRDIR>();
-			TJCRDIR From = null;
-			try {
-				BT = QuickStream.ReadFile(file);
-				var ret = new TJCRDIR();
-				string s;
-				do {
-					if (BT.EOF) throw new Exception("JQL heading not found!");
-					s = RL(BT);                    
-				} while (s=="" || qstr.Prefixed(s, "#"));
-				if (s != "JQL") throw new Exception("JQL not properly headed!");
-						var optional = true;
-						var author = "";
-						var notes = "";
-				while(!BT.EOF) {
-					s = RL(BT);
-						var c = new QP(s);
-					if (s!="" && (!qstr.Prefixed(s, "#"))){
-						switch (c.commando) {
-							case "REQUIRED":
-							case "REQ":
-								optional = false;
-								break;
-							case "OPTIONAL":
-							case "OPT":
-								optional = true;
-								break;
-							case "PATCH": {
-									var to = c.parameter.IndexOf('>');
-									if (to < 0) {
-										var p = JCR6.Dir(c.parameter);
-										if (p == null) {
-											if (optional) break;
-											throw new Exception($"Patch error {JCR6.JERROR}");
-										}
-										ret.Patch(p);
-									} else {
-										var rw = c.parameter.Substring(0, to).Trim().Replace("\\", "/");
-										var tg = c.parameter.Substring(to + 1).Trim().Replace("\\", "/");
-										var p = JCR6.Dir(rw);
-										if (p == null) {
-											if (optional) break;
-											throw new Exception($"Patch error {JCR6.JERROR}");
-										}
-										ret.Patch(p, tg);
-									}
-									break;
-								}
-							case "AUTHOR":
-							case "AUT":
-								author = c.parameter;
-								break;
-							case "NOTES":
-							case "NTS":
-								notes = c.parameter;
-								break;
-							case "RAW": {
-									var p = c.parameter.IndexOf('>');
-									var rw = c.parameter.Replace("\\","/");
-									var tg = rw;
-									if (p >= 0) {
-										rw = c.parameter.Substring(0, p).Trim().Replace("\\","/");
-										tg = c.parameter.Substring(p + 1).Trim().Replace("\\", "/");
-									}
-									if (tg.Length>1 && tg[1] == ':') tg = tg.Substring(2);
-									while (tg[1] == '/') tg = tg.Substring(1);
-									if (rw == "") throw new Exception("RAW no original");
-									if (tg == "") throw new Exception("RAW no target");
-									if (!File.Exists(rw)) {
-										if (optional) break;
-										throw new Exception($"Required raw file \"{rw}\" doesn't exist!");
-									}
-									var e = new TJCREntry();
-									e.Entry = tg;
-									e.MainFile = rw;
-									e.Storage = "Store";
-									e.Offset = 0;
-									e.Size = (int)new FileInfo(rw).Length;
-									e.CompressedSize = e.Size;
-									e.Notes = notes;
-									e.Author = author;
-									ret.Entries[tg.ToUpper()] = e;
-									break;
-								}
-							case "RAWDIR":  {
+        public override TJCRDIR Dir(string file) {
+            QuickStream BT = null;
+            var MapFrom = new Dictionary<string, TJCRDIR>();
+            TJCRDIR From = null;
+            try {
+                BT = QuickStream.ReadFile(file);
+                var ret = new TJCRDIR();
+                string s;
+                do {
+                    if (BT.EOF) throw new Exception("JQL heading not found!");
+                    s = RL(BT);                    
+                } while (s=="" || qstr.Prefixed(s, "#"));
+                if (s != "JQL") throw new Exception("JQL not properly headed!");
+                        var optional = true;
+                        var author = "";
+                        var notes = "";
+                while(!BT.EOF) {
+                    s = RL(BT);
+                        var c = new QP(s);
+                    if (s!="" && (!qstr.Prefixed(s, "#"))){
+                        switch (c.commando) {
+                            case "REQUIRED":
+                            case "REQ":
+                                optional = false;
+                                break;
+                            case "OPTIONAL":
+                            case "OPT":
+                                optional = true;
+                                break;
+                            case "PATCH": {
+                                    var to = c.parameter.IndexOf('>');
+                                    if (to < 0) {
+                                        var p = JCR6.Dir(c.parameter);
+                                        if (p == null) {
+                                            if (optional) break;
+                                            throw new Exception($"Patch error {JCR6.JERROR}");
+                                        }
+                                        ret.Patch(p);
+                                    } else {
+                                        var rw = c.parameter.Substring(0, to).Trim().Replace("\\", "/");
+                                        var tg = c.parameter.Substring(to + 1).Trim().Replace("\\", "/");
+                                        var p = JCR6.Dir(rw);
+                                        if (p == null) {
+                                            if (optional) break;
+                                            throw new Exception($"Patch error {JCR6.JERROR}");
+                                        }
+                                        ret.Patch(p, tg);
+                                    }
+                                    break;
+                                }
+                            case "AUTHOR":
+                            case "AUT":
+                                author = c.parameter;
+                                break;
+                            case "NOTES":
+                            case "NTS":
+                                notes = c.parameter;
+                                break;
+                            case "RAW": {
+                                    var p = c.parameter.IndexOf('>');
+                                    var rw = c.parameter.Replace("\\","/");
+                                    var tg = rw;
+                                    if (p >= 0) {
+                                        rw = c.parameter.Substring(0, p).Trim().Replace("\\","/");
+                                        tg = c.parameter.Substring(p + 1).Trim().Replace("\\", "/");
+                                    }
+                                    if (tg.Length>1 && tg[1] == ':') tg = tg.Substring(2);
+                                    while (tg[1] == '/') tg = tg.Substring(1);
+                                    if (rw == "") throw new Exception("RAW no original");
+                                    if (tg == "") throw new Exception("RAW no target");
+                                    if (!File.Exists(rw)) {
+                                        if (optional) break;
+                                        throw new Exception($"Required raw file \"{rw}\" doesn't exist!");
+                                    }
+                                    var e = new TJCREntry();
+                                    e.Entry = tg;
+                                    e.MainFile = rw;
+                                    e.Storage = "Store";
+                                    e.Offset = 0;
+                                    e.Size = (int)new FileInfo(rw).Length;
+                                    e.CompressedSize = e.Size;
+                                    e.Notes = notes;
+                                    e.Author = author;
+                                    ret.Entries[tg.ToUpper()] = e;
+                                    break;
+                                }
+                            case "RAWDIR":  {
                                     var p = c.parameter.IndexOf('>');
                                     string ds= "" , dt= "" ;
                                     if (p < 0)
                                         ds = c.parameter;
                                     else {
-										ds = c.parameter.Substring(0,p).Trim().Replace('\\', '/'); ;
-										dt = c.parameter.Substring(p + 1).Trim().Replace('\\', '/') + "/";
+                                        ds = c.parameter.Substring(0,p).Trim().Replace('\\', '/'); ;
+                                        dt = c.parameter.Substring(p + 1).Trim().Replace('\\', '/') + "/";
                                     }
                                     if (Directory.Exists(ds)) {
                                         var ptree = FileList.GetTree(ds);
                                         foreach (var f in ptree) {
-											string rw = ds + "/" + f;
-											if (JCR6.Recognize(rw) != "NONE") {
-												var ijcr = JCR6.Dir(rw);
-												foreach(var eij in ijcr.Entries) {
-													eij.Value.Entry=dt+"/"+f+"/"+eij.Value.Entry;
-													ret.Entries[eij.Value.Entry.ToUpper()] = eij.Value;
+                                            string rw = ds + "/" + f;
+                                            if (JCR6.Recognize(rw) != "NONE") {
+                                                var ijcr = JCR6.Dir(rw);
+                                                foreach(var eij in ijcr.Entries) {
+                                                    eij.Value.Entry=dt+"/"+f+"/"+eij.Value.Entry;
+                                                    ret.Entries[eij.Value.Entry.ToUpper()] = eij.Value;
                                                 }
-												//throw new Exception("Including JCR6 files found in raw dirs not yet supported");
-											} else {
-												var e = new TJCREntry();
-												e.Entry = dt + "/" + f; //e.Entry = tg;
-												e.MainFile = rw;
-												e.Storage = "Store";
-												e.Offset = 0;
-												e.Size = (int)new FileInfo(rw).Length;
-												e.CompressedSize = e.Size;
-												e.Notes = notes;
-												e.Author = author;
-												ret.Entries[e.Entry.ToUpper()] = e;
-											}
+                                                //throw new Exception("Including JCR6 files found in raw dirs not yet supported");
+                                            } else {
+                                                var e = new TJCREntry();
+                                                e.Entry = dt + "/" + f; //e.Entry = tg;
+                                                e.MainFile = rw;
+                                                e.Storage = "Store";
+                                                e.Offset = 0;
+                                                e.Size = (int)new FileInfo(rw).Length;
+                                                e.CompressedSize = e.Size;
+                                                e.Notes = notes;
+                                                e.Author = author;
+                                                ret.Entries[e.Entry.ToUpper()] = e;
+                                            }
                                         }
                                     } else if (!optional) throw new Exception("Required raw Directory '" + ds + "' not found");
                                 } break;
                             case "TEXT":
-							case "TXT": {
-									var tg = c.parameter.Trim().Replace("\\", "/");
-									if (tg.Length > 1 && tg[1] == ':') tg = tg.Substring(2);
-									while (tg[1] == '/') tg = tg.Substring(1);
-									if (tg == "") throw new Exception("TEXT no target");
-									var e = new TJCREntry();
-									var buf = new byte[5];
-									e.Entry = tg;
-									e.MainFile = file;
-									e.Storage = "Store";
-									e.Offset = (int)BT.Position;
-									e.Notes = notes;
-									e.Author = author;
-									do {
-										if (BT.EOF) throw new Exception("Unexpected end of file (TXT Block not ended)");
-										for (int i = 0; i < 4; i++) buf[i] = buf[i + 1];
-										buf[4] = BT.ReadByte();
-										//Console.WriteLine(Encoding.UTF8.GetString(buf, 0, buf.Length));
-									} while (Encoding.UTF8.GetString(buf,0,buf.Length) != "@END@");
-									RL(BT);
-									e.Size = (int)(BT.Position - 7) - e.Offset;
-									e.CompressedSize = e.Size;
-									ret.Entries[tg.ToUpper()] = e;
-									break;
-								}
-							case "COMMENT":
-							case "CMT": {
-									if (c.parameter == "") throw new Exception("Comment without a name");
-									var cmt = new StringBuilder("");
-									var l = "";
-									do {
-										if (BT.EOF) throw new Exception("Unexpected end of file (COMMENT block not ended)");
-										l = RL(BT, false);
-										if (l.Trim() != "@END@")
-											cmt.Append($"{l}\n");
-									} while (l.Trim() != "@END@");
-									ret.Comments[c.parameter] = cmt.ToString();
-									break;
-								}
-							case "IMPORT":
-								ret.PatchFile(c.parameter);
-								break;
-							case "FROM": {
-									var P = c.parameter.ToUpper();
-									if (MapFrom.ContainsKey(P)) {
-										From = MapFrom[P];
-									} else {
-										var F = JCR6.Dir(P);
-										if (F == null) throw new Exception(JCR6.JERROR);
-										From = F;
-										MapFrom[P] = F;
-									}
-								}
-								break;
-							case "STEAL": {
-									if (From == null) throw new Exception("STEAL cannot be used without FROM");
-									var p = c.parameter.IndexOf('>');
-									var rw = c.parameter.Replace("\\", "/");
-									var tg = rw;
-									if (p >= 0) {
-										rw = c.parameter.Substring(0, p).Trim().Replace("\\", "/");
-										tg = c.parameter.Substring(p + 1).Trim().Replace("\\", "/");
-									}
-									if (tg.Length > 1 && tg[1] == ':') tg = tg.Substring(2);
-									while (tg[1] == '/') tg = tg.Substring(1);
-									if (rw == "") throw new Exception("STEAL no original");
-									if (tg == "") throw new Exception("STEAL no target");
-									if (!From.Exists(rw)) throw new Exception($"Cannot steal a non-existent entry ({rw})");
-									var ei = From.Entries[rw.ToUpper()];
-									var eo = new TJCREntry();
-									foreach (var dat in ei.databool) eo.databool[dat.Key] = dat.Value;
-									foreach (var dat in ei.dataint) eo.dataint[dat.Key] = dat.Value;
-									foreach (var dat in ei.datastring) eo.datastring[dat.Key] = dat.Value;
-									eo.MainFile = ei.MainFile;
-									eo.Entry = tg;
-									ret.Entries[tg.ToUpper()] = eo;
-								}
-								break;
-							case "END":
-								return ret;
-							default: throw new Exception($"Unknown instruction! {c.commando}");
-						}
-					}
-				}
-				return ret;
-			} catch (Exception e) {
-				JCR6.JERROR = $"JQL error: {e.Message}";
+                            case "TXT": {
+                                    var tg = c.parameter.Trim().Replace("\\", "/");
+                                    if (tg.Length > 1 && tg[1] == ':') tg = tg.Substring(2);
+                                    while (tg[1] == '/') tg = tg.Substring(1);
+                                    if (tg == "") throw new Exception("TEXT no target");
+                                    var e = new TJCREntry();
+                                    var buf = new byte[5];
+                                    e.Entry = tg;
+                                    e.MainFile = file;
+                                    e.Storage = "Store";
+                                    e.Offset = (int)BT.Position;
+                                    e.Notes = notes;
+                                    e.Author = author;
+                                    do {
+                                        if (BT.EOF) throw new Exception("Unexpected end of file (TXT Block not ended)");
+                                        for (int i = 0; i < 4; i++) buf[i] = buf[i + 1];
+                                        buf[4] = BT.ReadByte();
+                                        //Console.WriteLine(Encoding.UTF8.GetString(buf, 0, buf.Length));
+                                    } while (Encoding.UTF8.GetString(buf,0,buf.Length) != "@END@");
+                                    RL(BT);
+                                    e.Size = (int)(BT.Position - 7) - e.Offset;
+                                    e.CompressedSize = e.Size;
+                                    ret.Entries[tg.ToUpper()] = e;
+                                    break;
+                                }
+                            case "COMMENT":
+                            case "CMT": {
+                                    if (c.parameter == "") throw new Exception("Comment without a name");
+                                    var cmt = new StringBuilder("");
+                                    var l = "";
+                                    do {
+                                        if (BT.EOF) throw new Exception("Unexpected end of file (COMMENT block not ended)");
+                                        l = RL(BT, false);
+                                        if (l.Trim() != "@END@")
+                                            cmt.Append($"{l}\n");
+                                    } while (l.Trim() != "@END@");
+                                    ret.Comments[c.parameter] = cmt.ToString();
+                                    break;
+                                }
+                            case "IMPORT":
+                                ret.PatchFile(c.parameter);
+                                break;
+                            case "FROM": {
+                                    var P = c.parameter.ToUpper();
+                                    if (MapFrom.ContainsKey(P)) {
+                                        From = MapFrom[P];
+                                    } else {
+                                        var F = JCR6.Dir(P);
+                                        if (F == null) throw new Exception(JCR6.JERROR);
+                                        From = F;
+                                        MapFrom[P] = F;
+                                    }
+                                }
+                                break;
+                            case "STEAL": {
+                                    if (From == null) throw new Exception("STEAL cannot be used without FROM");
+                                    var p = c.parameter.IndexOf('>');
+                                    var rw = c.parameter.Replace("\\", "/");
+                                    var tg = rw;
+                                    if (p >= 0) {
+                                        rw = c.parameter.Substring(0, p).Trim().Replace("\\", "/");
+                                        tg = c.parameter.Substring(p + 1).Trim().Replace("\\", "/");
+                                    }
+                                    if (tg.Length > 1 && tg[1] == ':') tg = tg.Substring(2);
+                                    while (tg[1] == '/') tg = tg.Substring(1);
+                                    if (rw == "") throw new Exception("STEAL no original");
+                                    if (tg == "") throw new Exception("STEAL no target");
+                                    if (!From.Exists(rw)) throw new Exception($"Cannot steal a non-existent entry ({rw})");
+                                    var ei = From.Entries[rw.ToUpper()];
+                                    var eo = new TJCREntry();
+                                    foreach (var dat in ei.databool) eo.databool[dat.Key] = dat.Value;
+                                    foreach (var dat in ei.dataint) eo.dataint[dat.Key] = dat.Value;
+                                    foreach (var dat in ei.datastring) eo.datastring[dat.Key] = dat.Value;
+                                    eo.MainFile = ei.MainFile;
+                                    eo.Entry = tg;
+                                    ret.Entries[tg.ToUpper()] = eo;
+                                }
+                                break;
+                            case "END":
+                                return ret;
+                            default: throw new Exception($"Unknown instruction! {c.commando}");
+                        }
+                    }
+                }
+                return ret;
+            } catch (Exception e) {
+                JCR6.JERROR = $"JQL error: {e.Message}";
 #if DEBUG
-				Console.WriteLine(e.StackTrace);
+                Console.WriteLine(e.StackTrace);
 #endif
-				return null;
-			} finally {
-				if (BT != null) BT.Close();
-			}
-		}
+                return null;
+            } finally {
+                if (BT != null) BT.Close();
+            }
+        }
 
-		public JCR_QuickLink() {
-			name = "JCR Quick Link";
-			JCR6.FileDrivers["JCR6 Quick Link"] = this;
-			new JCR_SuperQuickLink();
-		}
-	}
-	
+        public JCR_QuickLink() {
+            name = "JCR Quick Link";
+            JCR6.FileDrivers["JCR6 Quick Link"] = this;
+            new JCR_SuperQuickLink();
+        }
+    }
+    
 }
