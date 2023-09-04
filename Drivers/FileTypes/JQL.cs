@@ -25,6 +25,7 @@ using System.IO;
 using System.Text;
 using TrickyUnits;
 
+// TODO: Auto-detect alias and add them as such
 
 namespace UseJCR6 {
 
@@ -48,6 +49,7 @@ namespace UseJCR6 {
                     e.Storage = "Store";
                     e.Size = (int)QuickStream.FileSize(e.MainFile);
                     e.CompressedSize = e.Size;
+                    e.Offset = 0;
                     e.Notes = "Linked to by: " + file;
                     ret.Entries[e.Entry.ToUpper()] = e;
                 }
@@ -64,6 +66,7 @@ namespace UseJCR6 {
                 e.Storage = "Store";
                 e.Size = (int)QuickStream.FileSize(lfile);
                 e.CompressedSize = e.Size;
+                e.Offset = 0;
                 e.Notes = "Linked to by: " + file;
                 ret.Entries[e.Entry.ToUpper()] = e;
                 return ret;
@@ -230,12 +233,14 @@ namespace UseJCR6 {
                                                 var ijcr = JCR6.Dir(rw);
                                                 foreach(var eij in ijcr.Entries) {
                                                     eij.Value.Entry=dt+"/"+f+"/"+eij.Value.Entry;
+                                                    eij.Value.Entry = eij.Value.Entry.Replace("//", "/");
                                                     ret.Entries[eij.Value.Entry.ToUpper()] = eij.Value;
                                                 }
                                                 //throw new Exception("Including JCR6 files found in raw dirs not yet supported");
                                             } else {
                                                 var e = new TJCREntry();
                                                 e.Entry = dt + "/" + f; //e.Entry = tg;
+                                                e.Entry = e.Entry.Replace("//", "/");
                                                 e.MainFile = rw;
                                                 e.Storage = "Store";
                                                 e.Offset = 0;
