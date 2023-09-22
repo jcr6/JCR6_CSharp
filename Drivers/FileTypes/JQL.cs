@@ -1,7 +1,7 @@
 // Lic:
 // Drivers/FileTypes/JQL.cs
 // JQL (JCR quick link)
-// version: 23.07.22
+// version: 23.09.19
 // Copyright (C) 2020, 2023 Jeroen P. Broks
 // This software is provided 'as-is', without any express or implied
 // warranty.  In no event will the authors be held liable for any damages
@@ -32,7 +32,7 @@ namespace UseJCR6 {
     class JCR_SuperQuickLink : TJCRBASEDRIVER {
         override public bool Recognize(string file) {
             if (!File.Exists(file)) return false;
-            return (qstr.Left(QuickStream.LoadString(file).ToUpper(), 5) == "JSQL:");
+            return (qstr.Left(QuickStream.LoadString(file).ToUpper().Trim(), 5) == "JSQL:");
         }
 
         override public TJCRDIR Dir(string file) {
