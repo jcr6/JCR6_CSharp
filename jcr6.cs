@@ -420,7 +420,12 @@ namespace UseJCR6 {
 		/// Which compression algorithm has been used to compress this entry?
 		/// </summary>
 		public string Storage {
-			get { return datastring["__Storage"]; }
+			get {
+				if (!datastring.ContainsKey("__Storage")) {
+					return "???ERROR???";
+				}
+				return datastring["__Storage"]; 
+			}
 			set { datastring["__Storage"] = value; }
 		}
 
@@ -1064,7 +1069,7 @@ namespace UseJCR6 {
 
 
 
-        public void AddBytes(byte[] mybuffer, string Entry,  string Author = "", string Notes = "") {
+		public void AddBytes(byte[] mybuffer, string Entry,  string Author = "", string Notes = "") {
 			var s = nb(Entry, Author, Notes);
 			if (s == null) return;
 			if (mybuffer != null) s.WriteBytes(mybuffer);
